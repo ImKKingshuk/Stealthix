@@ -1,0 +1,26 @@
+name: "Strict Security Policy"
+version: "1.0"
+description: "High-security policy that fails scan on any vulnerability finding"
+rules:
+  - name: "Any Finding Fails Scan"
+    type: "cvss_threshold"
+    threshold: 0.1
+    operator: ">="
+    action: "fail_scan"
+    enabled: true
+  - name: "Forbidden SQLi Union"
+    type: "forbidden_kinds"
+    kinds: ["sqli-union", "sqli-stacked"]
+    action: "fail_scan"
+    enabled: true
+  - name: "Forbidden NoSQLi"
+    type: "forbidden_kinds"
+    kinds: ["nosqli-mongodb", "nosqli-couchdb"]
+    action: "fail_scan"
+    enabled: true
+compliance:
+  frameworks:
+    - owasp_top_10
+    - pci_dss_v4
+    - nist_800_53
+  strict_mode: true

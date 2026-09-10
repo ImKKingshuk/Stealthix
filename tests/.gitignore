@@ -1,0 +1,5 @@
+# Test-generated local artifacts.
+.tmp/
+tmp/
+fixtures/generated/
+*.actual.*

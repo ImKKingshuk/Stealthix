@@ -1,0 +1,26 @@
+name: "OWASP Top 10 Compliance Policy"
+version: "1.0"
+description: "Policy focused on OWASP Top 10 2021 compliance"
+rules:
+  - name: "OWASP A03 Injection Compliance"
+    type: "compliance_gate"
+    framework: "owasp_top_10"
+    required: ["A03:2021"]
+    action: "flag_finding"
+    enabled: true
+  - name: "OWASP A01 Access Control Compliance"
+    type: "compliance_gate"
+    framework: "owasp_top_10"
+    required: ["A01:2021"]
+    action: "flag_finding"
+    enabled: true
+  - name: "High CVSS OWASP Findings"
+    type: "cvss_threshold"
+    threshold: 7.0
+    operator: ">="
+    action: "fail_scan"
+    enabled: true
+compliance:
+  frameworks:
+    - owasp_top_10
+  strict_mode: true

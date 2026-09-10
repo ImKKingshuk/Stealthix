@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stealthix.dev/schemas/minimal-report.json",
+  "title": "Stealthix Minimal Report",
+  "description": "Minimal Stealthix report with essential information only",
+  "type": "object",
+  "required": ["target", "summary", "findings"],
+  "properties": {
+    "target": {
+      "type": "string",
+      "description": "Target URL that was scanned"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when report was generated"
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "total_findings": {"type": "integer"},
+        "highest_severity": {"type": "string"},
+        "highest_cvss": {"type": "number"},
+        "average_cvss": {"type": "number"}
+      }
+    },
+    "findings": {
+      "type": "array",
+      "description": "List of vulnerability findings",
+      "items": {
+        "type": "object",
+        "required": ["kind", "target", "severity", "cvss"],
+        "properties": {
+          "kind": {"type": "string"},
+          "target": {"type": "string"},
+          "parameter": {"type": "string"},
+          "severity": {
+            "type": "string",
+            "enum": ["Critical", "High", "Medium", "Low", "Info"]
+          },
+          "cvss": {"type": "number", "minimum": 0, "maximum": 10},
+          "confidence": {
+            "type": "string",
+            "enum": ["confirmed", "high", "medium", "low"]
+          }
+        }
+      }
+    }
+  }
+}

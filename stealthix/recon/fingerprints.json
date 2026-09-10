@@ -1,0 +1,428 @@
+{
+  "fingerprints": [
+    {
+      "name": "nginx",
+      "category": "web_server",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "^nginx", "regex": true, "weight": 0.9},
+        {"type": "body", "pattern": "<center>nginx</center>", "regex": false, "weight": 0.6}
+      ],
+      "version_patterns": [
+        {"type": "header", "key": "Server", "pattern": "nginx/([0-9.]+)", "regex": true}
+      ]
+    },
+    {
+      "name": "apache",
+      "category": "web_server",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "^Apache", "regex": true, "weight": 0.9},
+        {"type": "body", "pattern": "Apache Server at", "regex": false, "weight": 0.6}
+      ],
+      "version_patterns": [
+        {"type": "header", "key": "Server", "pattern": "Apache/([0-9.]+)", "regex": true}
+      ]
+    },
+    {
+      "name": "iis",
+      "category": "web_server",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "Microsoft-IIS", "regex": false, "weight": 0.9},
+        {"type": "header", "key": "X-Powered-By", "pattern": "ASP\\.NET", "regex": true, "weight": 0.7}
+      ],
+      "version_patterns": [
+        {"type": "header", "key": "Server", "pattern": "Microsoft-IIS/([0-9.]+)", "regex": true}
+      ]
+    },
+    {
+      "name": "litespeed",
+      "category": "web_server",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "LiteSpeed", "regex": false, "weight": 0.9}
+      ],
+      "version_patterns": [
+        {"type": "header", "key": "Server", "pattern": "LiteSpeed/([0-9.]+)", "regex": true}
+      ]
+    },
+    {
+      "name": "caddy",
+      "category": "web_server",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "Caddy", "regex": false, "weight": 0.9}
+      ],
+      "version_patterns": [
+        {"type": "header", "key": "Server", "pattern": "Caddy/([0-9.]+)", "regex": true}
+      ]
+    },
+    {
+      "name": "tomcat",
+      "category": "web_server",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "Apache-Coyote", "regex": false, "weight": 0.8},
+        {"type": "body", "pattern": "Apache Tomcat", "regex": false, "weight": 0.7}
+      ],
+      "version_patterns": [
+        {"type": "body", "pattern": "Apache Tomcat/([0-9.]+)", "regex": true}
+      ]
+    },
+    {
+      "name": "jetty",
+      "category": "web_server",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "Jetty", "regex": false, "weight": 0.9}
+      ],
+      "version_patterns": [
+        {"type": "header", "key": "Server", "pattern": "Jetty\\(([0-9.]+)\\)", "regex": true}
+      ]
+    },
+    {
+      "name": "django",
+      "category": "framework",
+      "patterns": [
+        {"type": "header", "key": "X-Frame-Options", "pattern": "DENY", "regex": false, "weight": 0.3},
+        {"type": "cookie", "key": "csrftoken", "pattern": ".*", "regex": true, "weight": 0.7},
+        {"type": "body", "pattern": "csrfmiddlewaretoken", "regex": false, "weight": 0.8}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "flask",
+      "category": "framework",
+      "patterns": [
+        {"type": "cookie", "key": "session", "pattern": ".*", "regex": true, "weight": 0.5},
+        {"type": "header", "key": "Server", "pattern": "Werkzeug", "regex": false, "weight": 0.7}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "fastapi",
+      "category": "framework",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "uvicorn", "regex": false, "weight": 0.6},
+        {"type": "body", "pattern": "\"detail\":", "regex": false, "weight": 0.4}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "rails",
+      "category": "framework",
+      "patterns": [
+        {"type": "header", "key": "X-Powered-By", "pattern": "Phusion Passenger", "regex": false, "weight": 0.7},
+        {"type": "cookie", "key": "_session_id", "pattern": ".*", "regex": true, "weight": 0.6}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "express",
+      "category": "framework",
+      "patterns": [
+        {"type": "header", "key": "X-Powered-By", "pattern": "Express", "regex": false, "weight": 0.8}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "spring_boot",
+      "category": "framework",
+      "patterns": [
+        {"type": "header", "key": "X-Application-Context", "pattern": ".*", "regex": true, "weight": 0.8},
+        {"type": "body", "pattern": "Whitelabel Error Page", "regex": false, "weight": 0.7}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "laravel",
+      "category": "framework",
+      "patterns": [
+        {"type": "cookie", "key": "laravel_session", "pattern": ".*", "regex": true, "weight": 0.8},
+        {"type": "body", "pattern": "Laravel", "regex": false, "weight": 0.5}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "aspnet",
+      "category": "framework",
+      "patterns": [
+        {"type": "header", "key": "X-Powered-By", "pattern": "ASP\\.NET", "regex": true, "weight": 0.8},
+        {"type": "header", "key": "X-AspNet-Version", "pattern": ".*", "regex": true, "weight": 0.9}
+      ],
+      "version_patterns": [
+        {"type": "header", "key": "X-AspNet-Version", "pattern": "([0-9.]+)", "regex": true}
+      ]
+    },
+    {
+      "name": "symfony",
+      "category": "framework",
+      "patterns": [
+        {"type": "header", "key": "X-Powered-By", "pattern": "PHP", "regex": false, "weight": 0.3},
+        {"type": "body", "pattern": "symfony", "regex": false, "weight": 0.6}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "wordpress",
+      "category": "cms",
+      "patterns": [
+        {"type": "body", "pattern": "wp-content", "regex": false, "weight": 0.8},
+        {"type": "body", "pattern": "wp-includes", "regex": false, "weight": 0.8},
+        {"type": "path", "pattern": "/wp-admin", "regex": false, "weight": 0.9}
+      ],
+      "version_patterns": [
+        {"type": "body", "pattern": "WordPress ([0-9.]+)", "regex": true}
+      ]
+    },
+    {
+      "name": "drupal",
+      "category": "cms",
+      "patterns": [
+        {"type": "header", "key": "X-Generator", "pattern": "Drupal", "regex": false, "weight": 0.9},
+        {"type": "body", "pattern": "Drupal", "regex": false, "weight": 0.6}
+      ],
+      "version_patterns": [
+        {"type": "header", "key": "X-Generator", "pattern": "Drupal ([0-9.]+)", "regex": true}
+      ]
+    },
+    {
+      "name": "joomla",
+      "category": "cms",
+      "patterns": [
+        {"type": "body", "pattern": "/components/com_", "regex": false, "weight": 0.8},
+        {"type": "body", "pattern": "Joomla!", "regex": false, "weight": 0.7}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "magento",
+      "category": "cms",
+      "patterns": [
+        {"type": "body", "pattern": "Mage.Cookies", "regex": false, "weight": 0.8},
+        {"type": "cookie", "key": "frontend", "pattern": ".*", "regex": true, "weight": 0.6}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "cloudflare",
+      "category": "cdn_waf",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "cloudflare", "regex": false, "weight": 0.9},
+        {"type": "header", "key": "CF-RAY", "pattern": ".*", "regex": true, "weight": 0.95}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "akamai",
+      "category": "cdn_waf",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "AkamaiGHost", "regex": false, "weight": 0.9},
+        {"type": "header", "key": "X-Akamai-Transformed", "pattern": ".*", "regex": true, "weight": 0.95}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "fastly",
+      "category": "cdn_waf",
+      "patterns": [
+        {"type": "header", "key": "X-Served-By", "pattern": "cache-.*\\.fastly\\.net", "regex": true, "weight": 0.9},
+        {"type": "header", "key": "Fastly-Debug-Digest", "pattern": ".*", "regex": true, "weight": 0.95}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "sucuri",
+      "category": "cdn_waf",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "Sucuri", "regex": false, "weight": 0.9},
+        {"type": "header", "key": "X-Sucuri-ID", "pattern": ".*", "regex": true, "weight": 0.95}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "imperva",
+      "category": "cdn_waf",
+      "patterns": [
+        {"type": "header", "key": "X-CDN", "pattern": "Incapsula", "regex": false, "weight": 0.9},
+        {"type": "cookie", "key": "incap_ses_", "pattern": ".*", "regex": true, "weight": 0.85}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "modsecurity",
+      "category": "cdn_waf",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "Mod_Security", "regex": false, "weight": 0.8},
+        {"type": "body", "pattern": "ModSecurity", "regex": false, "weight": 0.7}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "f5_bigip",
+      "category": "cdn_waf",
+      "patterns": [
+        {"type": "cookie", "key": "BIGipServer", "pattern": ".*", "regex": true, "weight": 0.9},
+        {"type": "header", "key": "X-WA-Info", "pattern": ".*", "regex": true, "weight": 0.8}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "aws_cloudfront",
+      "category": "cdn_waf",
+      "patterns": [
+        {"type": "header", "key": "Via", "pattern": "CloudFront", "regex": false, "weight": 0.9},
+        {"type": "header", "key": "X-Amz-Cf-Id", "pattern": ".*", "regex": true, "weight": 0.95}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "php",
+      "category": "language",
+      "patterns": [
+        {"type": "header", "key": "X-Powered-By", "pattern": "PHP", "regex": false, "weight": 0.9},
+        {"type": "cookie", "key": "PHPSESSID", "pattern": ".*", "regex": true, "weight": 0.8}
+      ],
+      "version_patterns": [
+        {"type": "header", "key": "X-Powered-By", "pattern": "PHP/([0-9.]+)", "regex": true}
+      ]
+    },
+    {
+      "name": "python",
+      "category": "language",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "Python", "regex": false, "weight": 0.7},
+        {"type": "header", "key": "Server", "pattern": "gunicorn", "regex": false, "weight": 0.6}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "ruby",
+      "category": "language",
+      "patterns": [
+        {"type": "header", "key": "X-Powered-By", "pattern": "Phusion Passenger", "regex": false, "weight": 0.7},
+        {"type": "header", "key": "Server", "pattern": "WEBrick", "regex": false, "weight": 0.6}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "nodejs",
+      "category": "language",
+      "patterns": [
+        {"type": "header", "key": "X-Powered-By", "pattern": "Express", "regex": false, "weight": 0.7},
+        {"type": "header", "key": "Server", "pattern": "Node\\.js", "regex": true, "weight": 0.8}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "java",
+      "category": "language",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "Apache-Coyote", "regex": false, "weight": 0.7},
+        {"type": "cookie", "key": "JSESSIONID", "pattern": ".*", "regex": true, "weight": 0.8}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "dotnet",
+      "category": "language",
+      "patterns": [
+        {"type": "header", "key": "X-Powered-By", "pattern": "ASP\\.NET", "regex": true, "weight": 0.9},
+        {"type": "header", "key": "X-AspNet-Version", "pattern": ".*", "regex": true, "weight": 0.9}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "go",
+      "category": "language",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "Go", "regex": false, "weight": 0.7}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "rust",
+      "category": "language",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "actix-web", "regex": false, "weight": 0.8},
+        {"type": "header", "key": "Server", "pattern": "rocket", "regex": false, "weight": 0.8}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "linux",
+      "category": "os",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "Ubuntu", "regex": false, "weight": 0.6},
+        {"type": "header", "key": "Server", "pattern": "Debian", "regex": false, "weight": 0.6},
+        {"type": "header", "key": "Server", "pattern": "CentOS", "regex": false, "weight": 0.6}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "windows",
+      "category": "os",
+      "patterns": [
+        {"type": "header", "key": "Server", "pattern": "Microsoft-IIS", "regex": false, "weight": 0.8},
+        {"type": "header", "key": "Server", "pattern": "Win32", "regex": false, "weight": 0.7}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "mysql",
+      "category": "database",
+      "patterns": [
+        {"type": "body", "pattern": "mysql", "regex": false, "weight": 0.5},
+        {"type": "body", "pattern": "SQL syntax.*MySQL", "regex": true, "weight": 0.8}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "postgresql",
+      "category": "database",
+      "patterns": [
+        {"type": "body", "pattern": "PostgreSQL", "regex": false, "weight": 0.8},
+        {"type": "body", "pattern": "psql", "regex": false, "weight": 0.6}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "mongodb",
+      "category": "database",
+      "patterns": [
+        {"type": "body", "pattern": "MongoDB", "regex": false, "weight": 0.8},
+        {"type": "body", "pattern": "BSON", "regex": false, "weight": 0.6}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "redis",
+      "category": "database",
+      "patterns": [
+        {"type": "body", "pattern": "Redis", "regex": false, "weight": 0.8},
+        {"type": "body", "pattern": "redis_version", "regex": false, "weight": 0.9}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "oracle",
+      "category": "database",
+      "patterns": [
+        {"type": "body", "pattern": "ORA-[0-9]+", "regex": true, "weight": 0.9},
+        {"type": "body", "pattern": "Oracle", "regex": false, "weight": 0.6}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "mssql",
+      "category": "database",
+      "patterns": [
+        {"type": "body", "pattern": "Microsoft SQL Server", "regex": false, "weight": 0.9},
+        {"type": "body", "pattern": "ODBC SQL Server Driver", "regex": false, "weight": 0.8}
+      ],
+      "version_patterns": []
+    },
+    {
+      "name": "sqlite",
+      "category": "database",
+      "patterns": [
+        {"type": "body", "pattern": "SQLite", "regex": false, "weight": 0.8}
+      ],
+      "version_patterns": []
+    }
+  ]
+}

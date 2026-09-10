@@ -1,0 +1,26 @@
+name: "PCI DSS v4 Compliance Policy"
+version: "1.0"
+description: "Policy focused on PCI DSS v4 compliance"
+rules:
+  - name: "PCI DSS 6.5.1 Injection Flaws"
+    type: "compliance_gate"
+    framework: "pci_dss_v4"
+    required: ["6.5.1"]
+    action: "fail_scan"
+    enabled: true
+  - name: "PCI DSS 7.2.5 Access Control"
+    type: "compliance_gate"
+    framework: "pci_dss_v4"
+    required: ["7.2.5"]
+    action: "fail_scan"
+    enabled: true
+  - name: "High CVSS PCI Findings"
+    type: "cvss_threshold"
+    threshold: 7.0
+    operator: ">="
+    action: "fail_scan"
+    enabled: true
+compliance:
+  frameworks:
+    - pci_dss_v4
+  strict_mode: true

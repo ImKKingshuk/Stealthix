@@ -1,0 +1,4 @@
+# Python cache and extension artifacts for this module tree.
+__pycache__/
+*.py[cod]
+*.so

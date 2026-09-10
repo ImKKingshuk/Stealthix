@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stealthix.dev/schemas/report.json",
+  "title": "Stealthix Report",
+  "description": "Full Stealthix scan report with all details",
+  "type": "object",
+  "required": ["target", "findings", "scores", "compliance", "executive_summary"],
+  "properties": {
+    "target": {
+      "type": "string",
+      "description": "Target URL that was scanned"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when report was generated"
+    },
+    "findings": {
+      "type": "array",
+      "description": "List of vulnerability findings",
+      "items": {
+        "type": "object",
+        "required": ["kind", "target", "severity", "cvss"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "Finding type (e.g., sqli-boolean, nosqli-mongodb)"
+          },
+          "target": {
+            "type": "string",
+            "description": "Target URL where finding was discovered"
+          },
+          "parameter": {
+            "type": "string",
+            "description": "Parameter name (if applicable)"
+          },
+          "location": {
+            "type": "string",
+            "description": "Location in request (e.g., query, body, header)"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["Critical", "High", "Medium", "Low", "Info"],
+            "description": "Severity rating"
+          },
+          "cvss": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10,
+            "description": "CVSS score"
+          },
+          "cvss_base": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10,
+            "description": "CVSS base score"
+          },
+          "cvss_temporal": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10,
+            "description": "CVSS temporal score"
+          },
+          "cvss_environmental": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10,
+            "description": "CVSS environmental score"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": ["confirmed", "high", "medium", "low"],
+            "description": "Confidence rating"
+          },
+          "confidence_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Confidence score (0-1)"
+          },
+          "evidence_count": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of evidence pairs"
+          },
+          "signals": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Detection signals"
+          },
+          "observed_payloads": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Payloads that triggered detection"
+          },
+          "errors": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Error messages observed"
+          },
+          "compliance": {
+            "type": "object",
+            "properties": {
+              "cwe": {
+                "type": "object",
+                "properties": {
+                  "id": {"type": "string"},
+                  "name": {"type": "string"}
+                }
+              },
+              "owasp_top_10": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {"type": "string"},
+                    "name": {"type": "string"}
+                  }
+                }
+              }
+            }
+          },
+          "remediation": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Remediation steps"
+          }
+        }
+      }
+    },
+    "scores": {
+      "type": "object",
+      "properties": {
+        "highest": {"type": "number"},
+        "average": {"type": "number"},
+        "base_highest": {"type": "number"},
+        "temporal_highest": {"type": "number"},
+        "environmental_highest": {"type": "number"},
+        "severity_counts": {
+          "type": "object",
+          "properties": {
+            "Critical": {"type": "integer"},
+            "High": {"type": "integer"},
+            "Medium": {"type": "integer"},
+            "Low": {"type": "integer"},
+            "Info": {"type": "integer"}
+          }
+        }
+      }
+    },
+    "compliance": {
+      "type": "object",
+      "properties": {
+        "cwe": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "name": {"type": "string"},
+              "count": {"type": "integer"}
+            }
+          }
+        },
+        "owasp_top_10": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "name": {"type": "string"},
+              "count": {"type": "integer"}
+            }
+          }
+        },
+        "pci_dss_v4": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "name": {"type": "string"},
+              "count": {"type": "integer"}
+            }
+          }
+        },
+        "nist_800_53": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "name": {"type": "string"},
+              "count": {"type": "integer"}
+            }
+          }
+        }
+      }
+    },
+    "executive_summary": {
+      "type": "object",
+      "properties": {
+        "risk_score": {"type": "number"},
+        "risk_rating": {"type": "string"},
+        "total_findings": {"type": "integer"},
+        "highest_severity": {"type": "string"},
+        "highest_cvss": {"type": "number"},
+        "average_cvss": {"type": "number"}
+      }
+    },
+    "attack_surface": {
+      "type": "object",
+      "properties": {
+        "request_count": {"type": "integer"},
+        "target_count": {"type": "integer"},
+        "auth_enabled": {"type": "boolean"}
+      }
+    },
+    "timeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": {"type": "string"},
+          "phase": {"type": "string"},
+          "message": {"type": "string"}
+        }
+      }
+    }
+  }
+}

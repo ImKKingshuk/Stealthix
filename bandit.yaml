@@ -1,0 +1,6 @@
+exclude_dirs:
+  - tests
+skips:
+  # Stealthix intentionally builds SQL/NoSQL/NewSQL payload strings for scanner probes.
+  # These payload factories are covered by domain tests; keep real injection sinks reviewed separately.
+  - B608

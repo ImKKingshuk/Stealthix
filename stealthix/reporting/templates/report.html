@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stealthix Enterprise Report - {{ report.target }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .meta-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .meta-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 5px;
+        }
+        
+        .meta-label {
+            font-size: 0.85em;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .meta-value {
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .chart-container {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            height: 350px;
+        }
+        
+        .filter-bar {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .filter-group label {
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        
+        select, input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+        
+        button {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        th:hover {
+            background: #5568d3;
+        }
+        
+        tbody tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .severity-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .severity-critical {
+            background: #fee;
+            color: #c00;
+        }
+        
+        .severity-high {
+            background: #ffe4b5;
+            color: #cc6600;
+        }
+        
+        .severity-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .severity-low {
+            background: #d1edff;
+            color: #0c5460;
+        }
+        
+        .severity-info {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .confidence-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+        
+        .confidence-confirmed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .confidence-high {
+            background: #cce5ff;
+            color: #004085;
+        }
+        
+        .confidence-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .confidence-low {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .finding-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .finding-details.expanded {
+            max-height: 1000px;
+        }
+        
+        .toggle-details {
+            background: none;
+            color: #667eea;
+            padding: 0;
+            font-size: 0.85em;
+            text-decoration: underline;
+        }
+        
+        .toggle-details:hover {
+            background: none;
+            text-decoration: none;
+        }
+        
+        .details-content {
+            padding: 15px;
+            background: #f9f9f9;
+            margin-top: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+        
+        .details-content h4 {
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+        
+        .details-content ul {
+            margin-left: 20px;
+        }
+        
+        .details-content li {
+            margin-bottom: 5px;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            
+            .section {
+                box-shadow: none;
+                page-break-inside: avoid;
+            }
+            
+            .filter-bar {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            table {
+                font-size: 0.85em;
+            }
+            
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Stealthix Enterprise Report</h1>
+            <div class="meta-info">
+                <div class="meta-item">
+                    <div class="meta-label">Target</div>
+                    <div class="meta-value">{{ report.target }}</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Generated</div>
+                    <div class="meta-value">{{ report.generated_at }}</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Risk Score</div>
+                    <div class="meta-value">{{ report.executive_summary.risk_score }} ({{ report.executive_summary.risk_rating }})</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Total Findings</div>
+                    <div class="meta-value">{{ report.executive_summary.total_findings }}</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Highest CVSS</div>
+                    <div class="meta-value">{{ report.scores.highest }}</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Average CVSS</div>
+                    <div class="meta-value">{{ report.scores.average }}</div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="section">
+            <h2>Findings Overview</h2>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <canvas id="severityChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="kindChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="complianceChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="cvssChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Findings</h2>
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>Severity:</label>
+                    <select id="severityFilter">
+                        <option value="">All</option>
+                        <option value="Critical">Critical</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                        <option value="Info">Info</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Kind:</label>
+                    <select id="kindFilter">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>CVSS Min:</label>
+                    <input type="number" id="cvssMin" min="0" max="10" step="0.1" placeholder="0">
+                </div>
+                <div class="filter-group">
+                    <label>CVSS Max:</label>
+                    <input type="number" id="cvssMax" min="0" max="10" step="0.1" placeholder="10">
+                </div>
+                <div class="filter-group">
+                    <label>Search:</label>
+                    <input type="text" id="searchInput" placeholder="Search findings...">
+                </div>
+                <button onclick="resetFilters()">Reset Filters</button>
+                <button onclick="exportCSV()">Export CSV</button>
+            </div>
+            <table id="findingsTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('severity')">Severity</th>
+                        <th onclick="sortTable('kind')">Kind</th>
+                        <th onclick="sortTable('target')">Target</th>
+                        <th onclick="sortTable('parameter')">Parameter</th>
+                        <th onclick="sortTable('cvss')">CVSS</th>
+                        <th onclick="sortTable('confidence')">Confidence</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody id="findingsBody">
+                </tbody>
+            </table>
+            <div id="noResults" class="no-results" style="display: none;">
+                No findings match the current filters.
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Chart data from server
+        const chartData = {{ report.charts | tojson }};
+        const findings = {{ report.findings | tojson }};
+        
+        let currentSort = { column: null, ascending: true };
+        
+        // Initialize charts
+        function initCharts() {
+            // Severity distribution
+            new Chart(document.getElementById('severityChart'), {
+                type: 'pie',
+                data: {
+                    labels: chartData.severity.labels,
+                    datasets: [{
+                        data: chartData.severity.data,
+                        backgroundColor: [
+                            '#dc3545', // Critical
+                            '#fd7e14', // High
+                            '#ffc107', // Medium
+                            '#17a2b8', // Low
+                            '#6c757d'  // Info
+                        ]
+                    }],
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            title: { display: true, text: 'Severity Distribution' }
+                        }
+                    }
+                });
+            
+            // Findings by kind
+            new Chart(document.getElementById('kindChart'), {
+                type: 'bar',
+                data: {
+                    labels: chartData.kind.labels,
+                    datasets: [{
+                        label: 'Count',
+                        data: chartData.kind.data,
+                        backgroundColor: '#667eea'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Findings by Kind' }
+                    }
+                }
+            });
+            
+            // Compliance mapping
+            new Chart(document.getElementById('complianceChart'), {
+                type: 'bar',
+                data: {
+                    labels: chartData.compliance.labels,
+                    datasets: chartData.compliance.datasets.map((ds, i) => ({
+                        label: ds.label,
+                        data: ds.data,
+                        backgroundColor: ['#667eea', '#764ba2', '#f093fb'][i % 3]
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        title: { display: true, text: 'Compliance Mapping' }
+                    }
+                }
+            });
+            
+            // CVSS distribution
+            new Chart(document.getElementById('cvssChart'), {
+                type: 'bar',
+                data: {
+                    labels: chartData.cvss.labels,
+                    datasets: [{
+                        label: 'Count',
+                        data: chartData.cvss.data,
+                        backgroundColor: '#667eea'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'CVSS Score Distribution' }
+                    }
+                }
+            });
+        }
+        
+        // Populate kind filter
+        function populateKindFilter() {
+            const kinds = [...new Set(findings.map(f => f.kind))];
+            const select = document.getElementById('kindFilter');
+            kinds.forEach(kind => {
+                const option = document.createElement('option');
+                option.value = kind;
+                option.textContent = kind;
+                select.appendChild(option);
+            });
+        }
+        
+        // Render findings table
+        function renderFindings(filteredFindings) {
+            const tbody = document.getElementById('findingsBody');
+            const noResults = document.getElementById('noResults');
+            
+            tbody.innerHTML = '';
+            
+            if (filteredFindings.length === 0) {
+                noResults.style.display = 'block';
+                return;
+            }
+            
+            noResults.style.display = 'none';
+            
+            filteredFindings.forEach((finding, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="severity-badge severity-${finding.severity.toLowerCase()}">${finding.severity}</span></td>
+                    <td>${finding.kind}</td>
+                    <td>${finding.target}</td>
+                    <td>${finding.parameter || '-'}</td>
+                    <td>${finding.cvss.toFixed(1)}</td>
+                    <td>
+                        ${finding.confidence}
+                        <span class="confidence-badge confidence-${finding.confidence.toLowerCase()}">${(finding.confidence_score * 100).toFixed(0)}%</span>
+                    </td>
+                    <td>
+                        <button class="toggle-details" onclick="toggleDetails(${index})">Show Details</button>
+                        <div class="finding-details" id="details-${index}">
+                            <div class="details-content">
+                                <h4>Signals</h4>
+                                <ul>
+                                    ${finding.signals.map(s => `<li>${s}</li>`).join('')}
+                                </ul>
+                                <h4>Observed Payloads</h4>
+                                <ul>
+                                    ${finding.observed_payloads.map(p => `<li><code>${p}</code></li>`).join('')}
+                                </ul>
+                                <h4>Compliance</h4>
+                                <p>CWE: ${finding.compliance.cwe.id} - ${finding.compliance.cwe.name}</p>
+                                <p>OWASP: ${finding.compliance.owasp_top_10.map(o => o.id).join(', ')}</p>
+                            </div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Toggle details
+        function toggleDetails(index) {
+            const details = document.getElementById(`details-${index}`);
+            const button = details.previousElementSibling;
+            
+            if (details.classList.contains('expanded')) {
+                details.classList.remove('expanded');
+                button.textContent = 'Show Details';
+            } else {
+                details.classList.add('expanded');
+                button.textContent = 'Hide Details';
+            }
+        }
+        
+        // Filter findings
+        function filterFindings() {
+            const severity = document.getElementById('severityFilter').value;
+            const kind = document.getElementById('kindFilter').value;
+            const cvssMin = parseFloat(document.getElementById('cvssMin').value) || 0;
+            const cvssMax = parseFloat(document.getElementById('cvssMax').value) || 10;
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            
+            return findings.filter(finding => {
+                if (severity && finding.severity !== severity) return false;
+                if (kind && finding.kind !== kind) return false;
+                if (finding.cvss < cvssMin || finding.cvss > cvssMax) return false;
+                if (search && !JSON.stringify(finding).toLowerCase().includes(search)) return false;
+                return true;
+            });
+        }
+        
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('severityFilter').value = '';
+            document.getElementById('kindFilter').value = '';
+            document.getElementById('cvssMin').value = '';
+            document.getElementById('cvssMax').value = '';
+            document.getElementById('searchInput').value = '';
+            renderFindings(findings);
+        }
+        
+        // Sort table
+        function sortTable(column) {
+            if (currentSort.column === column) {
+                currentSort.ascending = !currentSort.ascending;
+            } else {
+                currentSort.column = column;
+                currentSort.ascending = true;
+            }
+            
+            const filtered = filterFindings();
+            filtered.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+                
+                if (typeof aVal === 'string') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                }
+                
+                if (currentSort.ascending) {
+                    return aVal > bVal ? 1 : -1;
+                } else {
+                    return aVal < bVal ? 1 : -1;
+                }
+            });
+            
+            renderFindings(filtered);
+        }
+        
+        // Export CSV
+        function exportCSV() {
+            const filtered = filterFindings();
+            const headers = ['Severity', 'Kind', 'Target', 'Parameter', 'CVSS', 'Confidence', 'Signals'];
+            const rows = filtered.map(f => [
+                f.severity,
+                f.kind,
+                f.target,
+                f.parameter || '',
+                f.cvss.toFixed(1),
+                f.confidence,
+                f.signals.join('; ')
+            ]);
+            
+            const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'stealthix-findings.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // Event listeners
+        document.getElementById('severityFilter').addEventListener('change', () => renderFindings(filterFindings()));
+        document.getElementById('kindFilter').addEventListener('change', () => renderFindings(filterFindings()));
+        document.getElementById('cvssMin').addEventListener('input', () => renderFindings(filterFindings()));
+        document.getElementById('cvssMax').addEventListener('input', () => renderFindings(filterFindings()));
+        document.getElementById('searchInput').addEventListener('input', () => renderFindings(filterFindings()));
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            populateKindFilter();
+            renderFindings(findings);
+        });
+    </script>
+</body>
+</html>

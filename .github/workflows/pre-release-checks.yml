@@ -1,0 +1,126 @@
+name: pre-release checks
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@46817827a5bfabe028bf34e1cce71fd40e2ff697 # 1.95.0
+        with:
+          toolchain: 1.95.0
+          components: rustfmt, clippy
+      - name: Install cargo-deny
+        run: cargo install cargo-deny --locked --version 0.20.2
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - run: uv sync --extra dev
+      - run: uv run --with maturin maturin develop -m stealthix-core/Cargo.toml
+      - run: uv run stealthix --version
+      - run: uv run stealthix --cli --help
+      - run: uv run cargo test --workspace
+      - run: uv run cargo fmt --all --check
+      - run: uv run cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - run: cargo deny check
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run ty check
+      - run: uv run pytest --cov=stealthix --cov=stealthix_headless_cli --cov-report=term-missing --cov-fail-under=56
+      - run: uv run bandit -c bandit.yaml -r stealthix stealthix_headless_cli --severity-level medium
+      - run: uv run pip-audit
+      - name: Typos Spell Check
+        uses: crate-ci/typos@d43b6c087ac471e2ea7b8af622ff15f05c0c365b # v1.50.1
+        with:
+          write_changes: false
+
+  build-check:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: dtolnay/rust-toolchain@46817827a5bfabe028bf34e1cce71fd40e2ff697 # 1.95.0
+        with:
+          toolchain: 1.95.0
+      - uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        with:
+          command: build
+          args: -m stealthix-core/Cargo.toml --release --out dist
+      - name: Smoke test built wheel
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import shutil
+          import subprocess
+
+          wheel = next(Path("dist").glob("*.whl"))
+          subprocess.run(["uv", "pip", "install", "--system", str(wheel)], check=True)
+
+          exe = shutil.which("stealthix")
+          if not exe:
+              raise SystemExit("stealthix not found on PATH after wheel install")
+
+          subprocess.run([exe, "--version"], check=True)
+          subprocess.run([exe, "--cli", "--help"], check=True)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: check-wheels-${{ matrix.os }}
+          path: dist/*
+          retention-days: 3
+
+  sdist-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      - uses: dtolnay/rust-toolchain@46817827a5bfabe028bf34e1cce71fd40e2ff697 # 1.95.0
+        with:
+          toolchain: 1.95.0
+      - uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        with:
+          command: sdist
+          args: -m stealthix-core/Cargo.toml --out dist
+      - name: Smoke test built sdist
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import shutil
+          import subprocess
+
+          sdist = next(Path("dist").glob("*.tar.gz"))
+          subprocess.run(["uv", "pip", "install", "--system", str(sdist)], check=True)
+
+          exe = shutil.which("stealthix")
+          if not exe:
+              raise SystemExit("stealthix not found on PATH after sdist install")
+
+          subprocess.run([exe, "--version"], check=True)
+          subprocess.run([exe, "--cli", "--help"], check=True)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: check-sdist
+          path: dist/*.tar.gz
+          retention-days: 3

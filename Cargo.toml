@@ -1,0 +1,3 @@
+[workspace]
+members = ["stealthix-core", "stealthix-tui"]
+resolver = "2"

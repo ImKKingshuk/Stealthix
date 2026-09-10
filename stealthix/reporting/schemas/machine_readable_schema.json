@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stealthix.dev/schemas/machine-readable-report.json",
+  "title": "Stealthix Machine-Readable Report",
+  "description": "Machine-readable format for tool consumption with arrays instead of nested objects",
+  "type": "object",
+  "required": ["scan_info", "findings"],
+  "properties": {
+    "scan_info": {
+      "type": "object",
+      "properties": {
+        "target": {"type": "string"},
+        "generated_at": {"type": "string", "format": "date-time"},
+        "total_findings": {"type": "integer"},
+        "risk_score": {"type": "number"},
+        "risk_rating": {"type": "string"},
+        "highest_cvss": {"type": "number"},
+        "average_cvss": {"type": "number"}
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "target", "severity", "cvss"],
+        "properties": {
+          "kind": {"type": "string"},
+          "target": {"type": "string"},
+          "parameter": {"type": "string"},
+          "location": {"type": "string"},
+          "severity": {
+            "type": "string",
+            "enum": ["Critical", "High", "Medium", "Low", "Info"]
+          },
+          "cvss": {"type": "number", "minimum": 0, "maximum": 10},
+          "cvss_base": {"type": "number", "minimum": 0, "maximum": 10},
+          "cvss_temporal": {"type": "number", "minimum": 0, "maximum": 10},
+          "cvss_environmental": {"type": "number", "minimum": 0, "maximum": 10},
+          "confidence": {
+            "type": "string",
+            "enum": ["confirmed", "high", "medium", "low"]
+          },
+          "confidence_score": {"type": "number", "minimum": 0, "maximum": 1},
+          "evidence_count": {"type": "integer", "minimum": 1},
+          "signals": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "observed_payloads": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "errors": {
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "cwe_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Array of CWE IDs"
+          },
+          "owasp_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Array of OWASP Top 10 IDs"
+          },
+          "pci_dss_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Array of PCI DSS IDs"
+          },
+          "nist_ids": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Array of NIST 800-53 IDs"
+          },
+          "remediation": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    },
+    "severity_counts": {
+      "type": "object",
+      "properties": {
+        "Critical": {"type": "integer"},
+        "High": {"type": "integer"},
+        "Medium": {"type": "integer"},
+        "Low": {"type": "integer"},
+        "Info": {"type": "integer"}
+      }
+    },
+    "compliance_summary": {
+      "type": "object",
+      "properties": {
+        "cwe_count": {"type": "integer"},
+        "owasp_count": {"type": "integer"},
+        "pci_dss_count": {"type": "integer"},
+        "nist_count": {"type": "integer"}
+      }
+    }
+  }
+}

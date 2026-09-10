@@ -1,0 +1,20 @@
+name: "Permissive Security Policy"
+version: "1.0"
+description: "Low-security policy that only flags critical findings"
+rules:
+  - name: "Critical CVSS Flagged"
+    type: "cvss_threshold"
+    threshold: 9.0
+    operator: ">="
+    action: "flag_finding"
+    enabled: true
+  - name: "High CVSS Warned"
+    type: "cvss_threshold"
+    threshold: 7.0
+    operator: ">="
+    action: "warn_only"
+    enabled: true
+compliance:
+  frameworks:
+    - owasp_top_10
+  strict_mode: false

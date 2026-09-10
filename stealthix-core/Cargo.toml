@@ -1,0 +1,35 @@
+[package]
+name = "stealthix-core"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+description = "Native Rust extension and TUI bridge for Stealthix"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/ImKKingshuk/Stealthix"
+homepage = "https://github.com/ImKKingshuk/Stealthix"
+
+[features]
+default = []
+extension-module = ["pyo3/extension-module"]
+
+[lib]
+name = "stealthix_core"
+crate-type = ["cdylib", "rlib"]
+test = false
+doctest = false
+
+[dependencies]
+pyo3 = { version = "0.29.2", features = ["abi3-py312"] }
+pyo3-async-runtimes = { version = "0.29.0", features = ["tokio-runtime"] }
+reqwest = { version = "0.13.4", features = ["json", "gzip", "brotli", "deflate", "rustls", "cookies"] }
+tokio = { version = "1.47", features = ["rt-multi-thread", "macros"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+regex = "1.12"
+urlencoding = "2.1"
+base64 = "0.22"
+hex = "0.4"
+stealthix-tui = { version = "0.1.0", path = "../stealthix-tui" }
+
+[build-dependencies]
+pyo3-build-config = "0.29.2"

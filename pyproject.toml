@@ -1,0 +1,224 @@
+[build-system]
+requires = ["maturin>=1.15.0,<2"]
+build-backend = "maturin"
+
+[project]
+name = "stealthix"
+version = "0.1.0"
+description = "The Ultimate Database Injection Detection Toolkit — SQL + NoSQL + NewSQL"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "GPL-3.0-or-later"}
+authors = [{name = "ImKKingshuk"}]
+keywords = [
+    "sql-injection",
+    "nosql-injection",
+    "security",
+    "pentesting",
+    "database",
+    "detection",
+    "cybersecurity",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Topic :: Security",
+    "Topic :: Software Development :: Testing",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Rust",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "rich>=13.7.1",
+    "jinja2>=3.1.4",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.15.0",
+    "pyyaml>=6.0.2",
+    "tomli>=2.0.1",
+    "requests>=2.32.3",
+    "reportlab>=4.1.0",
+    "cryptography>=50.0.1",
+    "keyring>=24.0",
+    "structlog>=24.0",
+    "jsonschema>=4.20.0",
+    "redis>=5.0.0",
+    "defusedxml>=0.7.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-mock>=3.12",
+    "pytest-cov>=5.0",
+    "bandit>=1.7",
+    "pip-audit>=2.7",
+    "ty>=0.0.29",
+    "ruff>=0.15.9",
+    "maturin>=1.15.0,<2",
+    "hypothesis>=6.0",
+]
+postgresql-compat = [
+    "psycopg2-binary>=2.9.0",
+]
+mysql-compat = [
+    "mysql-connector-python>=8.0.0",
+]
+embedded = [
+    "jpype1>=1.4.0",
+]
+cloud-warehouse = [
+    "snowflake-connector-python>=3.0.0",
+    "google-cloud-bigquery>=3.0.0",
+    "redshift-connector>=2.0.0",
+]
+analytical = [
+    "clickhouse-connect>=0.6.0",
+]
+legacy = [
+    "firebirdsql>=1.0.0",
+    "pymssql>=2.2.0",
+    "ibm-db>=3.0.0",
+]
+unique = [
+    "duckdb>=0.8.0",
+]
+all = [
+    "stealthix[postgresql-compat,mysql-compat,embedded,cloud-warehouse,analytical,legacy,unique]",
+]
+nosql-document = [
+    "pymongo>=4.0.0",
+    "couchbase>=4.0.0",
+    "python-arango>=2.0.0",
+    "rethinkdb>=2.4.0",
+]
+nosql-graph = [
+    "neo4j>=5.0.0",
+    "gremlinpython>=3.0.0",
+]
+nosql-search = [
+    "elasticsearch>=8.0.0",
+    "pysolr>=0.5.0",
+]
+nosql-timeseries = [
+    "influxdb-client>=1.0.0",
+    "prometheus-api-client>=0.0.0",
+]
+nosql-keyvalue = [
+    "aerospike>=6.0.0",
+]
+nosql-multimodel = [
+    "azure-cosmos>=4.0.0",
+    "boto3>=1.0.0",
+]
+nosql-all = [
+    "stealthix[nosql-document,nosql-graph,nosql-search,nosql-timeseries,nosql-keyvalue,nosql-multimodel]",
+]
+
+[project.scripts]
+stealthix = "stealthix_headless_cli.main:cli"
+
+[project.entry-points."stealthix.plugins"]
+# Note: Plugin entry points are not currently used - plugins are loaded directly from module lists
+# Internal SQL, NoSQL, and NewSQL plugins are loaded via stealthix.plugins.sql.SQL_PLUGINS,
+# stealthix.plugins.nosql.NOSQL_PLUGINS, and stealthix.plugins.newsql.NEWSQL_PLUGINS
+
+[project.urls]
+Homepage = "https://github.com/ImKKingshuk/Stealthix"
+Repository = "https://github.com/ImKKingshuk/Stealthix"
+Issues = "https://github.com/ImKKingshuk/Stealthix/issues"
+Documentation = "https://github.com/ImKKingshuk/Stealthix#readme"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["."]
+
+[tool.coverage.run]
+branch = true
+source = ["stealthix", "stealthix_headless_cli"]
+omit = [
+  "stealthix/__main__.py",
+  "stealthix_headless_cli/interactive.py",
+]
+
+[tool.coverage.report]
+skip_covered = true
+show_missing = true
+exclude_lines = [
+  "pragma: no cover",
+  "if __name__ == .__main__.:",
+]
+
+[tool.ty]
+
+[tool.ty.src]
+include = ["stealthix", "stealthix_headless_cli"]
+
+[tool.ty.analysis]
+respect-type-ignore-comments = true
+allowed-unresolved-imports = [
+  "reportlab",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # pyflakes
+  "I",   # isort
+  "B",   # flake8-bugbear
+  "C4",  # flake8-comprehensions
+  "UP",  # pyupgrade
+  "SIM", # flake8-simplify
+]
+ignore = [
+  "E501", # large existing corpus of long literals/messages
+  "B008", # existing API defaults use call expressions in places
+  "SIM103", # style-only simplification across many existing helpers
+  "SIM105", # style-only conversion to contextlib.suppress
+  "SIM117", # style-only nested-with flattening
+  "SIM102", # style-only nested-if flattening
+  "SIM118", # style-only dict membership rewrite
+  "SIM108", # style-only ternary rewrites
+  "C401", # style-only comprehension rewrite
+  "UP042", # defer StrEnum migration for compatibility/readability reasons
+  "F401", # existing package/module exports rely on imported names
+  "SIM115", # style-only context-manager rewrites
+  "SIM116", # style-only dict-dispatch rewrites
+  "F601", # historical duplicate-key fixtures remain tolerated for now
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["stealthix", "stealthix_headless_cli"]
+
+[tool.maturin]
+module-name = "stealthix.stealthix_core"
+features = ["extension-module"]
+manifest-path = "stealthix-core/Cargo.toml"
+python-source = "."
+python-packages = ["stealthix", "stealthix_headless_cli"]
+include = [
+    "stealthix/**/*.py",
+    "stealthix_headless_cli/**/*.py",
+    "stealthix/payloads/*.txt",
+    "stealthix-core/Cargo.toml",
+    "stealthix-core/build.rs",
+    "stealthix-core/src/**/*.rs",
+    "stealthix-tui/Cargo.toml",
+    "stealthix-tui/src/**/*.rs",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.9",
+    "ty>=0.0.29",
+]
