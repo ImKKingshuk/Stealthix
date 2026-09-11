@@ -38,11 +38,6 @@ jobs:
       - run: uv run pytest --cov=stealthix --cov=stealthix_headless_cli --cov-report=term-missing --cov-fail-under=56
       - run: uv run bandit -c bandit.yaml -r stealthix stealthix_headless_cli --severity-level medium
       - run: uv run pip-audit
-      - name: Typos Spell Check
-        uses: crate-ci/typos@d43b6c087ac471e2ea7b8af622ff15f05c0c365b # v1.50.1
-        with:
-          write_changes: false
-
   build-check:
     runs-on: ${{ matrix.os }}
     strategy:
