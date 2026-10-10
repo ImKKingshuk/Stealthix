@@ -34,6 +34,7 @@ def load_rust_core() -> dict[str, Any]:
         "CloudflareBypass": getattr(stealthix_core, "CloudflareBypass", None),
         "ModSecurityBypass": getattr(stealthix_core, "ModSecurityBypass", None),
         "DnsExfil": getattr(stealthix_core, "DnsExfil", None),
+        "Extractor": getattr(stealthix_core, "Extractor", None),
         "tamper": tamper_module,
         "apply_tamper": getattr(tamper_module, "apply_tamper", None)
         if tamper_module is not None

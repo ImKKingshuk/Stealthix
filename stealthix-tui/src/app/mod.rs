@@ -16,12 +16,13 @@ use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 use crate::models::{BridgeCallback, BridgeResponse, InitPayload, LogEntry, ScanResultData};
-use crate::state::{ExtractState, ProxyState, ResultsState, RunningState, ScanForm, Screen};
+use crate::state::{ExtractState, ProxyState, ResultsState, RunningState, ScanForm, Screen, Theme};
 
 pub(crate) struct App {
     callback: BridgeCallback,
     init: InitPayload,
     screen: Screen,
+    pub(crate) theme: Theme,
     should_quit: bool,
     show_help: bool,
     status_line: String,
@@ -61,6 +62,7 @@ impl App {
                 initial_config: None,
             },
             screen: Screen::Scan,
+            theme: Theme::default(),
             should_quit: false,
             show_help: false,
             status_line: "Loading Stealthix runtime…".to_string(),
@@ -159,7 +161,10 @@ impl App {
                 return Ok(());
             }
             if self.show_help {
-                if matches!(key.code, KeyCode::Esc | KeyCode::F(1) | KeyCode::Char('h')) {
+                if matches!(
+                    key.code,
+                    KeyCode::Esc | KeyCode::F(1) | KeyCode::Char('h') | KeyCode::Char('?')
+                ) {
                     self.show_help = false;
                 }
                 return Ok(());
@@ -184,8 +189,13 @@ impl App {
                 self.should_quit = true;
                 return Ok(true);
             }
-            KeyCode::F(1) | KeyCode::Char('h') => {
+            KeyCode::F(1) | KeyCode::Char('h') | KeyCode::Char('?') => {
                 self.show_help = true;
+                return Ok(true);
+            }
+            KeyCode::Char('t') if key.modifiers.is_empty() => {
+                self.theme = self.theme.next();
+                self.status_line = format!("Theme switched to: {}", self.theme.name());
                 return Ok(true);
             }
             KeyCode::Char('s') if key.modifiers.is_empty() => {

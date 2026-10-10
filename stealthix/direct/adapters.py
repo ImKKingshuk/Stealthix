@@ -83,8 +83,11 @@ def _http_request(
     method: str,
     path: str,
     body: Mapping[str, Any] | None = None,
+    params: Mapping[str, Any] | None = None,
     headers: Mapping[str, str] | None = None,
     metadata: Mapping[str, Any] | None = None,
+    database: str | None = None,
+    table: str | None = None,
 ) -> DirectServiceRequest:
     normalized_path = "/" + path.lstrip("/")
     endpoint = (target.endpoint or "").rstrip("/")
@@ -97,9 +100,10 @@ def _http_request(
         path=normalized_path,
         url=url,
         body=body or {},
+        params=params or {},
         headers=headers or {},
-        database=target.database,
-        table=target.table,
+        database=database or target.database,
+        table=table or target.table,
         metadata=metadata or {},
     )
 
@@ -720,11 +724,198 @@ def _resource_ids(resources: Any) -> list[str]:
     return _strings(resources)
 
 
+class MongoDBDirectAdapter(DirectServiceAdapterBase):
+    capabilities = DirectAdapterCapabilities(
+        backend="mongodb",
+        family="nosql",
+        aliases=("mongodb", "mongo", "mongod"),
+        operations=_OPERATIONS,
+        transports=("http", "mongodb"),
+        description="Builds MongoDB HTTP diagnostic/REST probes and wire command shapes.",
+    )
+
+    def build_request(
+        self, target: DirectTarget, operation: str, **kwargs: Any
+    ) -> DirectServiceRequest:
+        database = kwargs.get("database") or target.database
+        table = kwargs.get("table") or kwargs.get("collection") or target.table
+        limit = int(kwargs.get("limit", 25 if operation == "dump" else 1))
+
+        endpoint = (target.endpoint or "").strip()
+        is_mongo_wire = endpoint.startswith(("mongodb://", "mongodb+srv://")) or bool(
+            target.options.get("wire")
+        )
+
+        if is_mongo_wire:
+            if operation == "databases":
+                return DirectServiceRequest(
+                    operation=operation,
+                    transport="mongodb",
+                    action="listDatabases",
+                    command=("listDatabases",),
+                    body={"listDatabases": 1, "nameOnly": True},
+                    database="admin",
+                )
+            if not database:
+                raise ValueError(
+                    "MongoDB direct operations require a database except for databases."
+                )
+            if operation == "tables":
+                return DirectServiceRequest(
+                    operation=operation,
+                    transport="mongodb",
+                    action="listCollections",
+                    command=("listCollections",),
+                    body={"listCollections": 1, "nameOnly": True},
+                    database=database,
+                )
+            if operation in {"columns", "dump"}:
+                collection = _target_table(target, table)
+                return DirectServiceRequest(
+                    operation=operation,
+                    transport="mongodb",
+                    action="find",
+                    command=("find", collection),
+                    body={"find": collection, "limit": limit, "filter": {}},
+                    database=database,
+                    table=collection,
+                )
+            raise ValueError(f"Unsupported MongoDB direct operation: {operation}")
+
+        if operation == "databases":
+            return _http_request(
+                target,
+                operation=operation,
+                action="list_databases",
+                method="GET",
+                path="/_status",
+                params={"listDatabases": "1"},
+                headers={"Accept": "application/json"},
+            )
+        if not database:
+            raise ValueError(
+                "MongoDB direct operations require a database except for databases."
+            )
+        db = quote(str(database), safe="")
+        if operation == "tables":
+            return _http_request(
+                target,
+                operation=operation,
+                action="list_collections",
+                method="GET",
+                path=f"/{db}/_collections",
+                headers={"Accept": "application/json"},
+                database=database,
+            )
+        if operation in {"columns", "dump"}:
+            collection = quote(_target_table(target, table), safe="")
+            columns = list(kwargs.get("columns") or [])
+            projection = {col: 1 for col in columns} if columns else {}
+            body: dict[str, Any] = {"limit": limit}
+            if projection:
+                body["projection"] = projection
+            return _http_request(
+                target,
+                operation=operation,
+                action="find_documents",
+                method="GET" if operation == "dump" and not columns else "POST",
+                path=f"/{db}/{collection}",
+                body=body,
+                params={"limit": str(limit)} if operation == "dump" else {},
+                headers={"Accept": "application/json", "Content-Type": "application/json"},
+                database=database,
+                table=str(table),
+            )
+        raise ValueError(f"Unsupported MongoDB direct operation: {operation}")
+
+    def parse_response(
+        self, operation: str, raw: Any, request: DirectServiceRequest
+    ) -> dict[str, Any]:
+        data = _json(raw)
+        if not isinstance(data, (Mapping, list)):
+            return {}
+
+        if operation == "databases":
+            if isinstance(data, list):
+                return {"databases": _strings(data)}
+            if "databases" in data:
+                dbs = data["databases"]
+                if isinstance(dbs, list):
+                    return {
+                        "databases": [
+                            str(item.get("name", item))
+                            for item in dbs
+                            if (isinstance(item, Mapping) and "name" in item)
+                            or isinstance(item, str)
+                        ]
+                    }
+            if "dbs" in data and isinstance(data["dbs"], list):
+                return {"databases": [str(item.get("name", item)) for item in data["dbs"]]}
+            return {"databases": _strings(data.get("names", []))}
+
+        if operation == "tables":
+            if isinstance(data, list):
+                return {"tables": _strings(data)}
+            cursor = data.get("cursor")
+            if isinstance(cursor, Mapping) and "firstBatch" in cursor:
+                batch = cursor.get("firstBatch", [])
+                if isinstance(batch, list):
+                    return {
+                        "tables": [
+                            str(item.get("name", item))
+                            for item in batch
+                            if (isinstance(item, Mapping) and "name" in item)
+                            or isinstance(item, str)
+                        ]
+                    }
+            if "collections" in data and isinstance(data["collections"], list):
+                return {
+                    "tables": [
+                        str(item.get("name", item))
+                        for item in data["collections"]
+                        if (isinstance(item, Mapping) and "name" in item)
+                        or isinstance(item, str)
+                    ]
+                }
+            return {"tables": _strings(data.get("names", []))}
+
+        docs: list[dict[str, Any]] = []
+        if isinstance(data, list):
+            docs = [dict(item) for item in data if isinstance(item, Mapping)]
+        elif isinstance(data, Mapping):
+            cursor = data.get("cursor")
+            if isinstance(cursor, Mapping) and "firstBatch" in cursor:
+                batch = cursor.get("firstBatch", [])
+                if isinstance(batch, list):
+                    docs = [dict(item) for item in batch if isinstance(item, Mapping)]
+            elif "documents" in data and isinstance(data["documents"], list):
+                docs = [dict(item) for item in data["documents"] if isinstance(item, Mapping)]
+            elif "rows" in data and isinstance(data["rows"], list):
+                docs = [dict(item) for item in data["rows"] if isinstance(item, Mapping)]
+            elif "data" in data and isinstance(data["data"], list):
+                docs = [dict(item) for item in data["data"] if isinstance(item, Mapping)]
+            else:
+                docs = [dict(data)]
+
+        if operation == "columns":
+            return {
+                "columns": sorted(
+                    set().union(*(_nested_keys(doc, skip_private=False) for doc in docs))
+                )
+                if docs
+                else []
+            }
+        if operation == "dump":
+            return {"rows": docs}
+        return {}
+
+
 __all__ = [
     "CassandraDirectAdapter",
     "CosmosDBDirectAdapter",
     "CouchDBDirectAdapter",
     "DynamoDBDirectAdapter",
+    "MongoDBDirectAdapter",
     "Neo4jDirectAdapter",
     "RedisDirectAdapter",
     "SearchDirectAdapter",

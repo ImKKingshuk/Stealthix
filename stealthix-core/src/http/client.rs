@@ -1,5 +1,4 @@
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
 use reqwest::cookie::{CookieStore, Jar};
 use reqwest::{Client, Method, Response, Url};
 use std::collections::HashMap;
@@ -16,13 +15,8 @@ struct HttpResponseEnvelope {
     final_url: String,
 }
 
-impl HttpResponseEnvelope {
-    fn into_py<'py>(self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
-        let locals = PyDict::new(py);
-        locals.set_item("body", self.body)?;
-        locals.set_item("status_code", self.status_code)?;
-        locals.set_item("headers", self.headers)?;
-        locals.set_item("final_url", self.final_url)?;
+static RESPONSE_CLS: std::sync::LazyLock<Py<PyAny>> = std::sync::LazyLock::new(|| {
+    Python::attach(|py| {
         let code = CString::new(
             r#"
 class _StealthixHttpResponse(str):
@@ -42,16 +36,27 @@ class _StealthixHttpResponse(str):
         if isinstance(key, str) and key in {"body", "text", "status_code", "headers", "final_url"}:
             return getattr(self, key)
         return super().__getitem__(key)
-
-response = _StealthixHttpResponse(body, status_code, headers, final_url)
 "#,
         )
         .expect("embedded Python source should not contain null bytes");
-        py.run(&code, None, Some(&locals))?;
-        Ok(locals
-            .get_item("response")?
-            .expect("embedded Python source should set response")
-            .into_any())
+        let module = PyModule::from_code(
+            py,
+            &code,
+            &CString::new("response.py").unwrap(),
+            &CString::new("response").unwrap(),
+        )
+        .expect("should create response module");
+        module
+            .getattr("_StealthixHttpResponse")
+            .expect("should get class")
+            .unbind()
+    })
+});
+
+impl HttpResponseEnvelope {
+    fn into_py<'py>(self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        let cls = RESPONSE_CLS.bind(py);
+        cls.call1((self.body, self.status_code, self.headers, self.final_url))
     }
 }
 
@@ -190,15 +195,37 @@ impl HttpClient {
                     .await
                     .map_err(|e| e.to_string())?;
                 let client = client.clone();
+                let req_url = url.clone();
                 handles.push(tokio::spawn(async move {
                     let _permit = permit;
-                    let resp = client.get(url).send().await.map_err(|e| e.to_string())?;
-                    response_envelope(resp).await
+                    match client.get(&req_url).send().await {
+                        Ok(resp) => response_envelope(resp).await,
+                        Err(err) => Ok(HttpResponseEnvelope {
+                            status_code: 0,
+                            headers: HashMap::new(),
+                            body: format!("Error: {err}"),
+                            final_url: req_url,
+                        }),
+                    }
                 }));
             }
             let mut results = Vec::new();
             for handle in handles {
-                results.push(handle.await.map_err(|e| e.to_string())??);
+                match handle.await {
+                    Ok(Ok(envelope)) => results.push(envelope),
+                    Ok(Err(err)) => results.push(HttpResponseEnvelope {
+                        status_code: 0,
+                        headers: HashMap::new(),
+                        body: format!("Error: {err}"),
+                        final_url: String::new(),
+                    }),
+                    Err(join_err) => results.push(HttpResponseEnvelope {
+                        status_code: 0,
+                        headers: HashMap::new(),
+                        body: format!("Task error: {join_err}"),
+                        final_url: String::new(),
+                    }),
+                }
             }
             Ok::<_, String>(results)
         };

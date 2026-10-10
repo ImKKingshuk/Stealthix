@@ -17,35 +17,80 @@ from stealthix.core.targeting import discover_target_params
 ProgressEmitter = Callable[..., None]
 CheckpointSaver = Callable[..., None]
 
-_SQL_DBMS = {"mysql", "postgresql", "postgres", "mssql", "oracle", "sqlite", "mariadb", "db2"}
-_NOSQL_DBMS = {
-    "mongodb",
-    "mongo",
-    "documentdb",
-    "couchdb",
-    "couchbase",
-    "redis",
-    "cassandra",
-    "firebase",
-    "dynamodb",
-    "cosmosdb",
-    "cosmos",
-}
-_NEWSQL_DBMS = {
-    "cockroachdb",
-    "cockroach",
-    "tidb",
-    "voltdb",
-    "spanner",
-    "yugabyte",
-    "yugabytedb",
-    "ycql",
-    "yugabyte-ycql",
-    "yugabyte_ycql",
-}
-_SEARCH_DBMS = {"elasticsearch", "opensearch", "solr"}
-_GRAPH_DBMS = {"neo4j", "janusgraph", "neptune"}
-_TIMESERIES_DBMS = {"influxdb", "prometheus"}
+def _load_plugin_categories() -> tuple[set[str], set[str], set[str], set[str], set[str], set[str]]:
+    sql = {"mysql", "postgresql", "postgres", "mssql", "oracle", "sqlite", "mariadb", "db2"}
+    nosql = {
+        "mongodb",
+        "mongo",
+        "documentdb",
+        "couchdb",
+        "couchbase",
+        "redis",
+        "cassandra",
+        "firebase",
+        "dynamodb",
+        "cosmosdb",
+        "cosmos",
+    }
+    newsql = {
+        "cockroachdb",
+        "cockroach",
+        "tidb",
+        "voltdb",
+        "spanner",
+        "yugabyte",
+        "yugabytedb",
+        "ycql",
+        "yugabyte-ycql",
+        "yugabyte_ycql",
+        "nuodb",
+        "singlestore",
+        "oceanbase",
+        "polardb",
+        "tiflash",
+    }
+    search = {"elasticsearch", "opensearch", "solr"}
+    graph = {"neo4j", "janusgraph", "neptune"}
+    timeseries = {"influxdb", "prometheus"}
+
+    try:
+        from stealthix.plugins import all_plugins
+
+        for p in all_plugins():
+            dbms = getattr(p, "dbms", "").lower()
+            name = getattr(p, "name", "").lower()
+            family = getattr(p, "family", "").lower()
+            for ident in (dbms, name):
+                if not ident:
+                    continue
+                if family == "sql":
+                    sql.add(ident)
+                elif family == "newsql":
+                    newsql.add(ident)
+                elif family in {"search", "searchql", "searchqli"}:
+                    search.add(ident)
+                elif family in {"graph", "graphdb", "graphqli"}:
+                    graph.add(ident)
+                elif family in {"timeseries", "time-series", "timeseriesql", "timeseriesqli"}:
+                    timeseries.add(ident)
+                elif family in {
+                    "nosql",
+                    "document",
+                    "keyvalue",
+                    "key-value",
+                    "multimodel",
+                    "multi-model",
+                }:
+                    nosql.add(ident)
+    except Exception:
+        pass
+
+    return sql, nosql, newsql, search, graph, timeseries
+
+
+_SQL_DBMS, _NOSQL_DBMS, _NEWSQL_DBMS, _SEARCH_DBMS, _GRAPH_DBMS, _TIMESERIES_DBMS = (
+    _load_plugin_categories()
+)
 _SEARCH_FAMILIES = {"search", "searchql", "searchqli"}
 _GRAPH_FAMILIES = {"graph", "graphdb", "graphqli"}
 _TIMESERIES_FAMILIES = {"timeseries", "time-series", "timeseriesql", "timeseriesqli"}
@@ -201,7 +246,7 @@ class RuntimePlanner:
         has_search = bool(dbms_names & _SEARCH_DBMS or family_names & _SEARCH_FAMILIES)
         has_graph = bool(dbms_names & _GRAPH_DBMS or family_names & _GRAPH_FAMILIES)
         has_timeseries = bool(dbms_names & _TIMESERIES_DBMS or family_names & _TIMESERIES_FAMILIES)
-        has_sql = bool(dbms_names & _SQL_DBMS)
+        has_sql = bool(dbms_names & _SQL_DBMS or family_names & {"sql", "sqli"})
         has_newsql = bool(dbms_names & _NEWSQL_DBMS or family_names & _NEWSQL_FAMILIES)
         has_generic_nosql = bool(
             (dbms_names & _NOSQL_DBMS or family_names & _NOSQL_FAMILIES)

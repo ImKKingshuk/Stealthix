@@ -457,6 +457,57 @@ def build_parser() -> argparse.ArgumentParser:
     template_eval.add_argument("--output")
     template_eval.set_defaults(template_action="eval")
 
+    # Distributed subcommand
+    distributed = subparsers.add_parser(
+        "distributed", help="Run distributed coordinator or worker processes"
+    )
+    dist_sub = distributed.add_subparsers(dest="distributed_action")
+    dist_sub.required = True
+
+    dist_coord = dist_sub.add_parser("coordinator", help="Run as distributed scan coordinator")
+    _add_common_options(dist_coord)
+    dist_coord.add_argument("--url-file", help="Path to a newline-delimited file of URLs to scan")
+    dist_coord.add_argument("--redis-host", default="localhost", help="Redis host")
+    dist_coord.add_argument("--redis-port", type=int, default=6379, help="Redis port")
+    dist_coord.add_argument("--workers", type=int, default=4, help="Number of worker processes")
+    dist_coord.add_argument("--chunk-size", type=int, default=25, help="Targets per task chunk")
+    dist_coord.add_argument(
+        "--report",
+        choices=["html", "json", "markdown", "pdf", "sarif", "junit", "csv"],
+        default="json",
+    )
+    dist_coord.add_argument("--output")
+    dist_coord.set_defaults(distributed_action="coordinator")
+
+    dist_worker = dist_sub.add_parser("worker", help="Run as distributed scan worker process")
+    dist_worker.add_argument("--redis-host", default="localhost", help="Redis host")
+    dist_worker.add_argument("--redis-port", type=int, default=6379, help="Redis port")
+    dist_worker.add_argument("--worker-id", help="Optional worker ID")
+    dist_worker.set_defaults(distributed_action="worker")
+
+    # Benchmark subcommand
+    benchmark = subparsers.add_parser(
+        "benchmark", help="Run or inspect Stealthix benchmark evaluation suites"
+    )
+    bench_sub = benchmark.add_subparsers(dest="benchmark_action")
+    bench_sub.required = True
+
+    bench_manifest = bench_sub.add_parser("manifest", help="Show or export benchmark manifest")
+    bench_manifest.add_argument("--output", help="Output path for JSON manifest")
+    bench_manifest.set_defaults(benchmark_action="manifest")
+
+    bench_run = bench_sub.add_parser("run", help="Execute benchmark suite against test targets")
+    bench_run.add_argument("--manifest-file", help="Path to custom benchmark manifest JSON")
+    bench_run.add_argument("--target-url", help="Override target URL for benchmark scenarios")
+    bench_run.add_argument("--output", help="Output path for benchmark report")
+    bench_run.set_defaults(benchmark_action="run")
+
+    bench_summary = bench_sub.add_parser(
+        "summary", help="Show summary of available fixture catalog"
+    )
+    bench_summary.add_argument("--output", help="Output path for summary")
+    bench_summary.set_defaults(benchmark_action="summary")
+
     return parser
 
 

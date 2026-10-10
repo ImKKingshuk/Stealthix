@@ -50,6 +50,36 @@ impl App {
             (KeyCode::Char('2'), _) => self.export_report("markdown")?,
             (KeyCode::Char('3'), _) => self.export_report("html")?,
             (KeyCode::Char('4'), _) => self.export_report("pdf")?,
+            (KeyCode::Char('5'), _) => self.export_report("csv")?,
+            (KeyCode::Char('/'), _) if self.results.focus != 0 => {
+                self.results.focus = 0;
+            }
+            (KeyCode::Char('y'), _) if self.results.focus != 0 => {
+                let visible = self.filtered_finding_indices();
+                if let Some(selected) = self
+                    .findings_state
+                    .selected()
+                    .and_then(|idx| visible.get(idx).copied())
+                {
+                    if let Some(finding) =
+                        self.result.as_ref().and_then(|r| r.findings.get(selected))
+                    {
+                        let payload_str = finding
+                            .details
+                            .get("payload")
+                            .and_then(|p| p.as_str())
+                            .or(finding.parameter.as_deref())
+                            .unwrap_or("-");
+                        self.status_line = format!(
+                            "Yanked finding: [{}] {} target={} payload={}",
+                            finding.severity, finding.kind, finding.target, payload_str
+                        );
+                    }
+                }
+            }
+            (KeyCode::Esc, _) if self.results.focus == 0 => {
+                self.results.focus = 1;
+            }
             (KeyCode::Char(c), mods)
                 if (mods.is_empty() || mods == KeyModifiers::SHIFT) && self.results.focus == 0 =>
             {

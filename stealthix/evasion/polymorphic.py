@@ -15,6 +15,42 @@ from typing import Any
 from stealthix.utils import load_rust_core
 
 
+_DEFAULT_ENCODING_OPERATIONS: tuple[str, ...] = (
+    "url_encode",
+    "double_url_encode",
+    "hex_encode",
+    "base64_encode",
+    "space_to_comment",
+    "space_to_plus",
+    "random_case",
+    "html_encode",
+)
+
+
+def _py_fallback_tamper(op: str, text: str) -> str:
+    import base64
+    import html
+    import urllib.parse
+
+    if op == "url_encode":
+        return urllib.parse.quote(text, safe="")
+    if op == "double_url_encode":
+        return urllib.parse.quote(urllib.parse.quote(text, safe=""), safe="")
+    if op == "space_to_comment":
+        return text.replace(" ", "/**/")
+    if op == "space_to_plus":
+        return text.replace(" ", "+")
+    if op == "random_case":
+        return "".join(c.upper() if random.random() > 0.5 else c.lower() for c in text)
+    if op == "hex_encode":
+        return "".join(f"%{ord(c):02x}" for c in text)
+    if op == "base64_encode":
+        return base64.b64encode(text.encode("utf-8")).decode("utf-8")
+    if op == "html_encode":
+        return html.escape(text)
+    return text
+
+
 @dataclass
 class EncodingChain:
     """Represents a sequence of encoding transformations."""
@@ -66,8 +102,13 @@ class PolymorphicEncoder:
         rust = load_rust_core()
         list_scripts = rust.get("list_tamper_scripts")
         if callable(list_scripts):
-            return list_scripts()
-        return []
+            try:
+                scripts = list_scripts()
+                if scripts:
+                    return list(scripts)
+            except Exception:
+                pass
+        return list(_DEFAULT_ENCODING_OPERATIONS)
 
     def generate_chain(self, length: int | None = None) -> EncodingChain:
         """Generate a new encoding chain."""
@@ -181,9 +222,19 @@ class PolymorphicEncoder:
             try:
                 result = apply_tamper(list(chain.operations), result)
             except Exception:
-                # Fallback to individual application
-                for op in chain.operations:
-                    result = apply_tamper(op, result)
+                single_tamper = rust.get("apply_tamper")
+                if callable(single_tamper):
+                    for op in chain.operations:
+                        try:
+                            result = single_tamper(op, result)
+                        except Exception:
+                            result = _py_fallback_tamper(op, result)
+                else:
+                    for op in chain.operations:
+                        result = _py_fallback_tamper(op, result)
+        else:
+            for op in chain.operations:
+                result = _py_fallback_tamper(op, result)
 
         self._chain_history.append(",".join(chain.operations))
         if len(self._chain_history) > 100:

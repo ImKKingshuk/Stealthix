@@ -20,6 +20,8 @@ def dispatch_cli(
     run_proxy_workspace: Callable[[Any], Any],
     run_impact: Callable[[Any, dict[str, Any]], Any],
     run_template: Callable[[Any], Any],
+    run_distributed: Callable[[Any, dict[str, Any]], Any] | None = None,
+    run_benchmark: Callable[[Any], Any] | None = None,
     emit_result: Callable[[Any, str | None], None],
     usage_error_cls: type[Exception],
 ) -> int:
@@ -32,6 +34,12 @@ def dispatch_cli(
     try:
         if args.command == "support":
             result = run_support(args)
+        elif args.command == "benchmark":
+            if run_benchmark is None:
+                from stealthix.headless import run_benchmark_cmd as default_bench
+
+                run_benchmark = default_bench
+            result = run_benchmark(args)
         else:
             logger, config_data = initialize_runtime(
                 getattr(args, "config", None), getattr(args, "log_level", "INFO")
@@ -50,6 +58,12 @@ def dispatch_cli(
                 result = run_impact(args, config_data)
             elif args.command == "template":
                 result = run_template(args)
+            elif args.command == "distributed":
+                if run_distributed is None:
+                    from stealthix.headless import run_distributed as default_dist
+
+                    run_distributed = default_dist
+                result = run_distributed(args, config_data)
             else:
                 result = run_extract(args, config_data)
     except usage_error_cls as exc:

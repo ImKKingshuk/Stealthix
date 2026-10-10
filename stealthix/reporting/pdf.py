@@ -3,19 +3,24 @@ from __future__ import annotations
 from io import BytesIO
 from typing import Any, cast
 
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.lib.units import inch
-from reportlab.platypus import (
-    PageBreak,
-    Paragraph,
-    SimpleDocTemplate,
-    Spacer,
-    Table,
-    TableStyle,
-)
-from reportlab.platypus.tableofcontents import TableOfContents
+try:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import inch
+    from reportlab.platypus import (
+        PageBreak,
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
+    )
+    from reportlab.platypus.tableofcontents import TableOfContents
+
+    _HAS_REPORTLAB = True
+except ImportError:
+    _HAS_REPORTLAB = False
 
 from stealthix.core.models import ScanResult
 from stealthix.reporting.presentation import build_report_context
@@ -23,6 +28,10 @@ from stealthix.reporting.presentation import build_report_context
 
 def render_pdf(result: ScanResult) -> bytes:
     """Render scan result as PDF with enhanced styling."""
+    if not _HAS_REPORTLAB:
+        raise ImportError(
+            "PDF report generation requires 'reportlab'. Please install it using `pip install reportlab`."
+        )
     report = build_report_context(result)
     buffer = BytesIO()
 

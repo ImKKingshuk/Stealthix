@@ -16,11 +16,19 @@ impl DnsExfil {
             .filter(|c| c.is_ascii_alphanumeric() || *c == '-')
             .collect::<String>()
             .to_lowercase();
+        if cleaned.is_empty() {
+            return Ok("oob".to_string());
+        }
+        let truncated = if cleaned.len() > 240 {
+            &cleaned[..240]
+        } else {
+            &cleaned[..]
+        };
         let mut chunks = Vec::new();
         let mut start = 0;
-        while start < cleaned.len() {
-            let end = (start + 50).min(cleaned.len());
-            chunks.push(cleaned[start..end].to_string());
+        while start < truncated.len() {
+            let end = (start + 50).min(truncated.len());
+            chunks.push(truncated[start..end].to_string());
             start = end;
         }
         Ok(chunks.join("."))

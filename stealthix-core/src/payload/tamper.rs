@@ -1,6 +1,29 @@
 use base64::{engine::general_purpose, Engine as _};
 use pyo3::prelude::*;
 use regex::{Captures, Regex};
+use std::sync::LazyLock;
+
+static IDENT_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[A-Za-z_]+").unwrap());
+static PERCENT_HEX_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"%([0-9A-Fa-f]{2})").unwrap());
+static ZEROX_HEX_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"0x([0-9A-Fa-f]+)").unwrap());
+static AND_WORD_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)\bAND\b").unwrap());
+static OR_WORD_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)\bOR\b").unwrap());
+static IF_CALL_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)IF\(([^,]+),([^,]+),([^\)]+)\)").unwrap());
+static IFNULL_CALL_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)IFNULL\(([^,]+),([^\)]+)\)").unwrap());
+static LIMIT_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)LIMIT\s+(\d+)\s*,\s*(\d+)").unwrap());
+static MID_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)MID\(([^,]+),\s*([^,]+),\s*([^\)]+)\)").unwrap());
+static COMMENT_PAREN_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"([A-Za-z_]+)\(").unwrap());
+static GREATEST_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)(\b)([A-Za-z0-9_]+)\s*>\s*([A-Za-z0-9_]+)").unwrap());
+static INFO_SCHEMA_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)information_schema").unwrap());
+static UNION_ALL_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)UNION\s+ALL\s+SELECT").unwrap());
 
 fn sql_keywords() -> &'static [&'static str] {
     &[
@@ -16,8 +39,7 @@ fn is_keyword(word: &str) -> bool {
 }
 
 fn wrap_keywords(payload: &str, prefix: &str, suffix: &str) -> String {
-    Regex::new(r"[A-Za-z_]+")
-        .unwrap()
+    IDENT_RE
         .replace_all(payload, |caps: &Captures| {
             let word = &caps[0];
             if is_keyword(word) {
@@ -30,8 +52,7 @@ fn wrap_keywords(payload: &str, prefix: &str, suffix: &str) -> String {
 }
 
 fn random_comments(payload: &str) -> String {
-    Regex::new(r"[A-Za-z_]+")
-        .unwrap()
+    IDENT_RE
         .replace_all(payload, |caps: &Captures| {
             let word = &caps[0];
             if !is_keyword(word) || word.len() < 3 {
@@ -49,8 +70,7 @@ fn random_comments(payload: &str) -> String {
 }
 
 fn multiplespaces(payload: &str) -> String {
-    Regex::new(r"[A-Za-z_]+")
-        .unwrap()
+    IDENT_RE
         .replace_all(payload, |caps: &Captures| {
             let word = &caps[0];
             if is_keyword(word) {
@@ -107,8 +127,7 @@ fn unicode_escape(payload: &str, web: bool) -> String {
 }
 
 fn double_url_encode(payload: &str) -> String {
-    Regex::new(r"%([0-9A-Fa-f]{2})")
-        .unwrap()
+    PERCENT_HEX_RE
         .replace_all(payload, |caps: &Captures| {
             format!("%25{}", caps[1].to_ascii_uppercase())
         })
@@ -134,8 +153,7 @@ fn plus_to_concat(payload: &str, function_syntax: bool) -> String {
 }
 
 fn hex2char(payload: &str) -> String {
-    Regex::new(r"0x([0-9A-Fa-f]+)")
-        .unwrap()
+    ZEROX_HEX_RE
         .replace_all(payload, |caps: &Captures| {
             let hex = &caps[1];
             let chars = (0..hex.len())
@@ -255,8 +273,7 @@ fn block_comment_pg(payload: &str) -> String {
 }
 
 fn nested_comments(payload: &str) -> String {
-    Regex::new(r"[A-Za-z_]+")
-        .unwrap()
+    IDENT_RE
         .replace_all(payload, |caps: &Captures| {
             let word = &caps[0];
             if is_keyword(word) {
@@ -270,8 +287,7 @@ fn nested_comments(payload: &str) -> String {
 
 fn keyword_casing_random(payload: &str) -> String {
     let mut rng: i32 = 12345; // Simple deterministic seed
-    Regex::new(r"[A-Za-z_]+")
-        .unwrap()
+    IDENT_RE
         .replace_all(payload, |caps: &Captures| {
             let word = &caps[0];
             if is_keyword(word) {
@@ -289,8 +305,7 @@ fn keyword_casing_random(payload: &str) -> String {
 }
 
 fn keyword_casing_upper(payload: &str) -> String {
-    Regex::new(r"[A-Za-z_]+")
-        .unwrap()
+    IDENT_RE
         .replace_all(payload, |caps: &Captures| {
             let word = &caps[0];
             if is_keyword(word) {
@@ -303,8 +318,7 @@ fn keyword_casing_upper(payload: &str) -> String {
 }
 
 fn keyword_casing_lower(payload: &str) -> String {
-    Regex::new(r"[A-Za-z_]+")
-        .unwrap()
+    IDENT_RE
         .replace_all(payload, |caps: &Captures| {
             let word = &caps[0];
             if is_keyword(word) {
@@ -317,8 +331,7 @@ fn keyword_casing_lower(payload: &str) -> String {
 }
 
 fn keyword_obfuscation(payload: &str) -> String {
-    Regex::new(r"[A-Za-z_]+")
-        .unwrap()
+    IDENT_RE
         .replace_all(payload, |caps: &Captures| {
             let word = &caps[0];
             if is_keyword(word) {
@@ -429,8 +442,7 @@ fn union_obfuscation(payload: &str) -> String {
 }
 
 fn conditional_obfuscation(payload: &str) -> String {
-    Regex::new(r"(?i)IF\(([^,]+),([^,]+),([^\)]+)\)")
-        .unwrap()
+    IF_CALL_RE
         .replace_all(payload, |caps: &Captures| {
             format!(
                 "CASE WHEN {} THEN {} ELSE {} END",
@@ -456,24 +468,20 @@ fn apply_named(script: &str, payload: &str) -> String {
         "chardoubleencode" => double_url_encode(payload),
         "charunicodeencode" => unicode_escape(payload, true),
         "charunicodeescape" => unicode_escape(payload, false),
-        "commalesslimit" => Regex::new(r"(?i)LIMIT\s+(\d+)\s*,\s*(\d+)")
-            .unwrap()
+        "commalesslimit" => LIMIT_RE
             .replace_all(payload, |caps: &Captures| {
                 format!("LIMIT {} OFFSET {}", &caps[2], &caps[1])
             })
             .into_owned(),
-        "commalessmid" => Regex::new(r"(?i)MID\(([^,]+),\s*([^,]+),\s*([^\)]+)\)")
-            .unwrap()
+        "commalessmid" => MID_RE
             .replace_all(payload, |caps: &Captures| {
                 format!("MID({} FROM {} FOR {})", &caps[1], &caps[2], &caps[3])
             })
             .into_owned(),
-        "commentbeforeparentheses" => Regex::new(r"([A-Za-z_]+)\(")
-            .unwrap()
+        "commentbeforeparentheses" => COMMENT_PAREN_RE
             .replace_all(payload, "$1/**/(")
             .into_owned(),
-        "greatest" => Regex::new(r"(?i)(\b)([A-Za-z0-9_]+)\s*>\s*([A-Za-z0-9_]+)")
-            .unwrap()
+        "greatest" => GREATEST_RE
             .replace_all(payload, |caps: &Captures| {
                 format!(
                     "{}GREATEST({},{}+1)={}",
@@ -484,8 +492,7 @@ fn apply_named(script: &str, payload: &str) -> String {
         "halfversionedmorekeywords" => wrap_keywords(payload, "/*!0", "*/"),
         "hex2char" => hex2char(payload),
         "htmlencode" => htmlencode(payload),
-        "if2case" => Regex::new(r"(?i)IF\(([^,]+),([^,]+),([^\)]+)\)")
-            .unwrap()
+        "if2case" => IF_CALL_RE
             .replace_all(payload, |caps: &Captures| {
                 format!(
                     "CASE WHEN ({}) THEN ({}) ELSE ({}) END",
@@ -495,8 +502,7 @@ fn apply_named(script: &str, payload: &str) -> String {
                 )
             })
             .into_owned(),
-        "ifnull2casewhenisnull" => Regex::new(r"(?i)IFNULL\(([^,]+),([^\)]+)\)")
-            .unwrap()
+        "ifnull2casewhenisnull" => IFNULL_CALL_RE
             .replace_all(payload, |caps: &Captures| {
                 format!(
                     "CASE WHEN ISNULL({}) THEN ({}) ELSE ({}) END",
@@ -506,12 +512,10 @@ fn apply_named(script: &str, payload: &str) -> String {
                 )
             })
             .into_owned(),
-        "informationschemacomment" => Regex::new(r"(?i)information_schema")
-            .unwrap()
+        "informationschemacomment" => INFO_SCHEMA_RE
             .replace_all(payload, "information_schema/**/")
             .into_owned(),
-        "lowercase" => Regex::new(r"[A-Za-z_]+")
-            .unwrap()
+        "lowercase" => IDENT_RE
             .replace_all(payload, |caps: &Captures| {
                 let word = &caps[0];
                 if is_keyword(word) {
@@ -533,22 +537,17 @@ fn apply_named(script: &str, payload: &str) -> String {
                 format!("{payload}-- sp_password")
             }
         }
-        "symboliclogical" => Regex::new(r"(?i)\bAND\b")
-            .unwrap()
+        "symboliclogical" => AND_WORD_RE
             .replace_all(
-                &Regex::new(r"(?i)\bOR\b")
-                    .unwrap()
-                    .replace_all(payload, "%7C%7C"),
+                &OR_WORD_RE.replace_all(payload, "%7C%7C"),
                 "%26%26",
             )
             .into_owned(),
-        "unionalltounion" | "unionalltoinon" => Regex::new(r"(?i)UNION\s+ALL\s+SELECT")
-            .unwrap()
+        "unionalltounion" | "unionalltoinon" => UNION_ALL_RE
             .replace_all(payload, "UNION SELECT")
             .into_owned(),
         "unmagicquotes" => payload.replace('\'', "%bf%27").replace("-- ", "%23"),
-        "uppercase" => Regex::new(r"[A-Za-z_]+")
-            .unwrap()
+        "uppercase" => IDENT_RE
             .replace_all(payload, |caps: &Captures| {
                 let word = &caps[0];
                 if is_keyword(word) {

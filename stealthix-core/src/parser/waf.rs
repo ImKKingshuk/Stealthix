@@ -1,5 +1,33 @@
 use pyo3::prelude::*;
 use regex::Regex;
+use std::sync::LazyLock;
+
+static WAF_RULES: LazyLock<Vec<(&'static str, Regex)>> = LazyLock::new(|| {
+    vec![
+        ("cloudflare", Regex::new(r"cloudflare|cf-ray|cf-cache-status").unwrap()),
+        ("modsecurity", Regex::new(r"modsecurity|mod_security").unwrap()),
+        ("akamai", Regex::new(r"akamai|akamai-ghost").unwrap()),
+        ("imperva", Regex::new(r"imperva|incapsula").unwrap()),
+        (
+            "sucuri",
+            Regex::new(r"sucuri|x-sucuri|sucuri/cloudproxy|access denied - sucuri website firewall").unwrap(),
+        ),
+        ("f5", Regex::new(r"big-ip|f5").unwrap()),
+        (
+            "awswaf",
+            Regex::new(r"aws.?waf|x-amzn-requestid|x-amzn-trace-id|x-amzn-errortype|x-amz-cf-id|x-amz-cf-pop|cloudfront|the request could not be satisfied|request blocked").unwrap(),
+        ),
+        (
+            "fastly",
+            Regex::new(r"fastly|x-served-by|x-cache-hits|x-fastly-request-id").unwrap(),
+        ),
+        ("barracuda", Regex::new(r"barracuda").unwrap()),
+        ("fortinet", Regex::new(r"fortiweb|fortinet").unwrap()),
+        ("radware", Regex::new(r"radware|appwall").unwrap()),
+        ("stackpath", Regex::new(r"stackpath|x-cdn").unwrap()),
+        ("azure", Regex::new(r"azure|x-azure-ref").unwrap()),
+    ]
+});
 
 #[pyclass(skip_from_py_object)]
 pub struct WafDetector;
@@ -14,35 +42,9 @@ impl WafDetector {
     fn detect(&self, response: String, headers: Vec<String>) -> PyResult<Vec<String>> {
         let mut detected = Vec::new();
         let hay = response.to_lowercase();
-        let rules = vec![
-            ("cloudflare", r"cloudflare|cf-ray|cf-cache-status"),
-            ("modsecurity", r"modsecurity|mod_security"),
-            ("akamai", r"akamai|akamai-ghost"),
-            ("imperva", r"imperva|incapsula"),
-            (
-                "sucuri",
-                r"sucuri|x-sucuri|sucuri/cloudproxy|access denied - sucuri website firewall",
-            ),
-            ("f5", r"big-ip|f5"),
-            (
-                "awswaf",
-                r"aws.?waf|x-amzn-requestid|x-amzn-trace-id|x-amzn-errortype|x-amz-cf-id|x-amz-cf-pop|cloudfront|the request could not be satisfied|request blocked",
-            ),
-            (
-                "fastly",
-                r"fastly|x-served-by|x-cache-hits|x-fastly-request-id",
-            ),
-            ("barracuda", r"barracuda"),
-            ("fortinet", r"fortiweb|fortinet"),
-            ("radware", r"radware|appwall"),
-            ("stackpath", r"stackpath|x-cdn"),
-            ("azure", r"azure|x-azure-ref"),
-        ];
-        for (name, pattern) in rules {
-            let re = Regex::new(pattern)
-                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+        for (name, re) in WAF_RULES.iter() {
             if re.is_match(&hay) {
-                detected.push(name.to_string());
+                detected.push((*name).to_string());
             }
         }
         for header in headers {

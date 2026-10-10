@@ -5,6 +5,7 @@ from stealthix.direct.adapters import (
     CosmosDBDirectAdapter,
     CouchDBDirectAdapter,
     DynamoDBDirectAdapter,
+    MongoDBDirectAdapter,
     Neo4jDirectAdapter,
     RedisDirectAdapter,
     SearchDirectAdapter,
@@ -19,6 +20,7 @@ _ADAPTERS: tuple[DirectServiceAdapter, ...] = (
     CassandraDirectAdapter(),
     DynamoDBDirectAdapter(),
     CosmosDBDirectAdapter(),
+    MongoDBDirectAdapter(),
 )
 
 

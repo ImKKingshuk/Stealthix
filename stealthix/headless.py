@@ -1203,3 +1203,59 @@ def run_template(args: Any) -> HeadlessResult:
             }
         )
     raise HeadlessUsageError("Choose a valid template command.")
+
+
+def run_distributed(args: Any, config_data: dict[str, Any]) -> HeadlessResult:
+    """Execute distributed coordinator or worker commands."""
+    action = getattr(args, "distributed_action", None)
+    if action == "worker":
+        return run_worker_mode(args, config_data)
+    if action == "coordinator":
+        return run_distributed_scan(args, config_data)
+    raise HeadlessUsageError("Choose a valid distributed command (coordinator or worker).")
+
+
+def run_benchmark_cmd(args: Any) -> HeadlessResult:
+    """Execute benchmark suite commands (manifest, run, summary)."""
+    action = getattr(args, "benchmark_action", None)
+    from stealthix.benchmarks import phase1_manifest, run_benchmark
+    from stealthix.benchmarks.catalog import BenchmarkFixtureCatalog
+    from stealthix.benchmarks.models import BenchmarkManifest
+
+    if action == "manifest":
+        manifest = phase1_manifest()
+        return _json_result(manifest.to_dict())
+
+    if action == "summary":
+        manifest = phase1_manifest()
+        cov = manifest.coverage_summary()
+        summary = {
+            "manifest_id": manifest.manifest_id,
+            "version": manifest.version,
+            "scenario_count": len(manifest.scenarios),
+            "coverage": cov.to_dict(),
+            "families": list(cov.by_family.keys()),
+            "dbms_families": list(cov.by_dbms_family.keys()),
+        }
+        return _json_result(summary)
+
+    if action == "run":
+        manifest_file = getattr(args, "manifest_file", None)
+        if manifest_file:
+            path = Path(manifest_file)
+            if not path.is_file():
+                raise HeadlessUsageError(f"Manifest file not found: {manifest_file}")
+            data = json.loads(path.read_text(encoding="utf-8"))
+            manifest = BenchmarkManifest.from_dict(data)
+        else:
+            manifest = phase1_manifest()
+
+        target_url = getattr(args, "target_url", None)
+        base_urls = None
+        if target_url:
+            base_urls = {scenario.scenario_id: target_url for scenario in manifest.scenarios}
+
+        report = run_benchmark(manifest, base_urls=base_urls)
+        return _json_result(report.to_dict())
+
+    raise HeadlessUsageError("Choose a valid benchmark command (manifest, run, or summary).")

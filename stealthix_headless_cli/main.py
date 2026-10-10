@@ -7,7 +7,9 @@ from stealthix.headless import (
     HeadlessUsageError,
     emit_result,
     initialize_runtime,
+    run_benchmark_cmd,
     run_crawl,
+    run_distributed,
     run_extract,
     run_impact,
     run_proxy_workspace,
@@ -40,6 +42,8 @@ def cli(argv: list[str] | None = None) -> int:
         run_proxy_workspace=run_proxy_workspace,
         run_impact=run_impact,
         run_template=run_template,
+        run_distributed=run_distributed,
+        run_benchmark=run_benchmark_cmd,
         emit_result=emit_result,
         usage_error_cls=HeadlessUsageError,
     )

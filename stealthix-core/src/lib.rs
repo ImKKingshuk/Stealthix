@@ -140,62 +140,7 @@ fn stealthix_core(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(run_tui, m)?)?;
 
     let tamper_module = PyModule::new(py, "tamper")?;
-    tamper_module.add_function(wrap_pyfunction!(
-        payload::tamper::apply_tamper,
-        &tamper_module
-    )?)?;
-    tamper_module.add_function(wrap_pyfunction!(
-        payload::tamper::apply_tamper_sequence,
-        &tamper_module
-    )?)?;
-    tamper_module.add_function(wrap_pyfunction!(
-        payload::tamper::list_tamper_scripts,
-        &tamper_module
-    )?)?;
-    tamper_module.add_function(wrap_pyfunction!(
-        payload::tamper::tamper_reverse,
-        &tamper_module
-    )?)?;
-    tamper_module.add_function(wrap_pyfunction!(
-        payload::tamper::tamper_inline_comment,
-        &tamper_module
-    )?)?;
-    tamper_module.add_function(wrap_pyfunction!(
-        payload::tamper::tamper_space2comment,
-        &tamper_module
-    )?)?;
-    tamper_module.add_function(wrap_pyfunction!(
-        payload::tamper::tamper_space2plus,
-        &tamper_module
-    )?)?;
-    tamper_module.add_function(wrap_pyfunction!(
-        payload::tamper::tamper_space2tab,
-        &tamper_module
-    )?)?;
-    tamper_module.add_function(wrap_pyfunction!(
-        payload::tamper::tamper_randomcase,
-        &tamper_module
-    )?)?;
-    tamper_module.add_function(wrap_pyfunction!(
-        payload::tamper::tamper_between,
-        &tamper_module
-    )?)?;
-    tamper_module.add_function(wrap_pyfunction!(
-        payload::tamper::tamper_union_all,
-        &tamper_module
-    )?)?;
-    tamper_module.add_function(wrap_pyfunction!(
-        payload::tamper::tamper_eq2like,
-        &tamper_module
-    )?)?;
-    tamper_module.add_function(wrap_pyfunction!(
-        payload::tamper::tamper_utf8,
-        &tamper_module
-    )?)?;
-    tamper_module.add_function(wrap_pyfunction!(
-        payload::tamper::tamper_charencode,
-        &tamper_module
-    )?)?;
+    payload::tamper::tamper(py, &tamper_module)?;
     m.add_submodule(&tamper_module)?;
 
     Ok(())

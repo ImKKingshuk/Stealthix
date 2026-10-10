@@ -2,6 +2,82 @@ use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
 use std::time::Instant;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub(crate) enum Theme {
+    #[default]
+    CyanDark,
+    MatrixGreen,
+    Dracula,
+    HighContrast,
+}
+
+#[allow(dead_code)]
+impl Theme {
+    pub(crate) fn next(self) -> Self {
+        match self {
+            Theme::CyanDark => Theme::MatrixGreen,
+            Theme::MatrixGreen => Theme::Dracula,
+            Theme::Dracula => Theme::HighContrast,
+            Theme::HighContrast => Theme::CyanDark,
+        }
+    }
+
+    pub(crate) fn name(self) -> &'static str {
+        match self {
+            Theme::CyanDark => "Cyan Dark",
+            Theme::MatrixGreen => "Matrix Green",
+            Theme::Dracula => "Dracula",
+            Theme::HighContrast => "High Contrast",
+        }
+    }
+
+    pub(crate) fn primary(self) -> ratatui::style::Color {
+        match self {
+            Theme::CyanDark => ratatui::style::Color::Cyan,
+            Theme::MatrixGreen => ratatui::style::Color::Green,
+            Theme::Dracula => ratatui::style::Color::Magenta,
+            Theme::HighContrast => ratatui::style::Color::Yellow,
+        }
+    }
+
+    pub(crate) fn secondary(self) -> ratatui::style::Color {
+        match self {
+            Theme::CyanDark => ratatui::style::Color::Blue,
+            Theme::MatrixGreen => ratatui::style::Color::DarkGray,
+            Theme::Dracula => ratatui::style::Color::Cyan,
+            Theme::HighContrast => ratatui::style::Color::White,
+        }
+    }
+
+    pub(crate) fn accent(self) -> ratatui::style::Color {
+        match self {
+            Theme::CyanDark => ratatui::style::Color::Yellow,
+            Theme::MatrixGreen => ratatui::style::Color::LightGreen,
+            Theme::Dracula => ratatui::style::Color::LightYellow,
+            Theme::HighContrast => ratatui::style::Color::LightCyan,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_theme_cycle() {
+        let mut t = Theme::default();
+        assert_eq!(t, Theme::CyanDark);
+        t = t.next();
+        assert_eq!(t, Theme::MatrixGreen);
+        t = t.next();
+        assert_eq!(t, Theme::Dracula);
+        t = t.next();
+        assert_eq!(t, Theme::HighContrast);
+        t = t.next();
+        assert_eq!(t, Theme::CyanDark);
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Screen {
     Scan,

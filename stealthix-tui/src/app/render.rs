@@ -17,12 +17,13 @@ impl App {
         ])
         .areas(frame.area());
 
+        let title = format!("Stealthix [{}]", self.theme.name());
         let tabs = Tabs::new(vec!["Scan", "Running", "Results", "Extract", "Proxy"])
             .select(self.screen.index())
-            .block(Block::bordered().title("Stealthix"))
+            .block(Block::bordered().title(title))
             .highlight_style(
                 Style::default()
-                    .fg(Color::Cyan)
+                    .fg(self.theme.primary())
                     .add_modifier(Modifier::BOLD),
             );
         frame.render_widget(tabs, tabs_area);
@@ -38,7 +39,7 @@ impl App {
         let footer = Paragraph::new(self.status_line.clone())
             .wrap(Wrap { trim: true })
             .block(Block::bordered().title(
-                "Status / shortcuts: q quit · s scan · r results · e extract · w proxy · F1 help",
+                "Status / shortcuts: q quit · s scan · r results · e extract · w proxy · t theme · ? help",
             ));
         frame.render_widget(footer, footer_area);
 
@@ -55,7 +56,7 @@ impl App {
             Layout::vertical([Constraint::Length(3), Constraint::Fill(1)]).areas(left);
         let gauge = Gauge::default()
             .block(Block::bordered().title("Progress"))
-            .gauge_style(Style::default().fg(Color::Cyan).bg(Color::Black))
+            .gauge_style(Style::default().fg(self.theme.primary()).bg(Color::Black))
             .percent(self.running.progress_percent.min(100) as u16)
             .label(format!(
                 "{}% · {} · {} finding(s)",
@@ -63,7 +64,7 @@ impl App {
             ));
         frame.render_widget(gauge, gauge_area);
         let summary = Paragraph::new(Text::from(vec![
-            Line::from(format!("Status: {}", self.running.status)).fg(Color::Cyan),
+            Line::from(format!("Status: {}", self.running.status)).fg(self.theme.primary()),
             Line::from(format!("Phase: {}", self.running.phase)),
             Line::from(format!("Progress: {}%", self.running.progress_percent)),
             Line::from(format!(
@@ -141,14 +142,15 @@ impl App {
         let help = Paragraph::new(Text::from(vec![
             Line::from("Stealthix Rust TUI shortcuts")
                 .bold()
-                .fg(Color::Cyan),
+                .fg(self.theme.primary()),
             Line::from(""),
             Line::from("q quit"),
             Line::from("s scan screen"),
             Line::from("r results screen"),
             Line::from("e extraction screen"),
             Line::from("w proxy workspace screen"),
-            Line::from("F1 or h toggle help"),
+            Line::from("t cycle color theme (Cyan, Matrix Green, Dracula, High Contrast)"),
+            Line::from("? or F1 or h toggle help dialog"),
             Line::from("Tab / Shift+Tab move focus"),
             Line::from("F5 run the primary action on the current screen"),
             Line::from("Ctrl+S save profile from scan screen"),
@@ -157,12 +159,12 @@ impl App {
                 "Ctrl+D discover params · Ctrl+P restore default payloads for active family",
             ),
             Line::from("Running: Space pause/resume · p poll · c cancel"),
-            Line::from("Results: Tab filters · primary+secondary sort · Space select · o selected-only · z reset"),
+            Line::from("Results: / search · y copy finding · Tab filters · Space select · o selected-only · z reset"),
+            Line::from("1/2/3/4/5 export report in results screen (JSON / MD / HTML / PDF / CSV)"),
             Line::from("Extract: browse db/table/column lists and export dump with j/v"),
             Line::from("Proxy: j/k select records · l refresh persistent history"),
-            Line::from("1/2/3/4 export report in results screen"),
             Line::from(""),
-            Line::from("Press Esc, h, or F1 to close this dialog."),
+            Line::from("Press Esc, ?, h, or F1 to close this dialog."),
         ]))
         .block(Block::bordered().title("Help"))
         .wrap(Wrap { trim: true });
