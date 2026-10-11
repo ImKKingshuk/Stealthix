@@ -29,6 +29,9 @@ def _add_common_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--wizard", action="store_true")
     parser.add_argument("--session-load", help="Load a saved scan session before running")
     parser.add_argument("--session-save", help="Persist session state after the command completes")
+    parser.add_argument(
+        "--policy", help="Path to a policy YAML file for scan-time compliance enforcement"
+    )
     parser.add_argument("--resume", help="Resume a scan from a checkpoint file")
     parser.add_argument(
         "--checkpoint-file", help="Path to a checkpoint file to write during the scan"

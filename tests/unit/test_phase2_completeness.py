@@ -22,7 +22,7 @@ from stealthix.config import load_config
 from stealthix.core.http import _attempt_adaptive_retry
 from stealthix.core.session import ScanSession, SessionConfig
 from stealthix.detection.graphql import _post_json
-from stealthix.detection.websocket import _WebSocketClient, _exchange_message
+from stealthix.detection.websocket import _exchange_message, _WebSocketClient
 from stealthix.evasion.adaptive import AdaptiveCandidate
 
 
@@ -98,7 +98,7 @@ def test_websocket_client_respects_verify_tls():
                     hashlib.sha1(f"{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11".encode("ascii")).digest()
                 ).decode("ascii")
                 mock_sock.recv.return_value = (
-                    f"HTTP/1.1 101 Switching Protocols\r\nSec-WebSocket-Accept: {accept}\r\n\r\n".encode("utf-8")
+                    f"HTTP/1.1 101 Switching Protocols\r\nSec-WebSocket-Accept: {accept}\r\n\r\n".encode()
                 )
 
     mock_sock.sendall.side_effect = fake_sendall

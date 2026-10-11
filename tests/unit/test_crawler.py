@@ -137,3 +137,27 @@ def test_engine_scan_site_aggregates_per_target_results(monkeypatch):
     assert result.metadata["site_scan"] is True
     assert result.metadata["crawl"]["target_count"] == 2
     assert len(result.metadata["per_target_results"]) == 2
+
+
+def test_parse_forms_option_streaming_and_unclosed() -> None:
+    """Test parsing select options with multi-chunk text and unclosed tags."""
+    from stealthix.crawler.form_parser import parse_forms
+
+    html = """
+    <form action="/submit" method="POST">
+        <select name="role">
+            <option value="admin" selected>Administrator Role</option>
+            <option value="editor">Editor
+            <option>Viewer Member
+        </select>
+        <input type="submit" value="Save" />
+    </form>
+    """
+    forms = parse_forms("http://example.com/app", html)
+    assert len(forms) == 1
+    form = forms[0]
+    select_fields = [f for f in form.fields if f.name == "role"]
+    assert len(select_fields) == 1
+    role_field = select_fields[0]
+    assert role_field.options == ["admin", "editor", "Viewer Member"]
+    assert role_field.value == "admin"

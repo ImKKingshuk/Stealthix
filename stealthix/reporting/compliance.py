@@ -134,10 +134,21 @@ def _catalog() -> dict[str, dict[str, Any]]:
 
 def _family_for_kind(kind: str) -> str:
     lowered = kind.lower()
-    if lowered.startswith("sqli") or lowered == "newsql":
+    if (
+        lowered.startswith("sqli")
+        or lowered.startswith("newsql")
+        or lowered.startswith("timeseriesqli")
+    ):
         return "sql-injection"
-    if lowered.startswith("nosqli"):
+    if (
+        lowered.startswith("nosqli")
+        or lowered.startswith("graphqli")
+        or lowered.startswith("searchqli")
+    ):
         return "nosql-injection"
+    if lowered.startswith("websocket-"):
+        suffix = lowered.removeprefix("websocket-")
+        return _family_for_kind(suffix)
     if lowered == "idor":
         return "broken-access-control"
     return "generic"

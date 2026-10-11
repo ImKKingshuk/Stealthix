@@ -14,7 +14,6 @@ from typing import Any
 
 from stealthix.utils import load_rust_core
 
-
 _DEFAULT_ENCODING_OPERATIONS: tuple[str, ...] = (
     "url_encode",
     "double_url_encode",

@@ -78,3 +78,49 @@ def test_get_severity_color() -> None:
     assert _get_severity_color("Low") == "#17a2b8"
     assert _get_severity_color("Info") == "#6c757d"
     assert _get_severity_color("Unknown") == "#6c757d"
+
+
+def test_render_pdf_with_xml_and_html_evidence() -> None:
+    """Test PDF rendering survives unclosed XML/HTML in evidence and summaries."""
+    result = ScanResult(
+        target="http://example.com/search?q=<script>alert(1)</script>",
+        findings=[
+            Finding(
+                kind="sqli-error",
+                target="http://example.com/search?q=1' <unclosed>",
+                parameter="q",
+                details={
+                    "summary": "SQL syntax error with <script> and & entities",
+                    "cvss": 8.5,
+                    "confidence": "high",
+                    "evidence_pairs": [
+                        {
+                            "request": {
+                                "method": "GET",
+                                "url": "http://example.com/search?q=1' <foo>",
+                            },
+                            "response": {
+                                "status": 500,
+                                "content_type": "text/html",
+                                "body": "<html><body><div>Syntax error near '<unclosed> & 1 < 2'</body></html>",
+                            },
+                        }
+                    ],
+                },
+            )
+        ],
+        metadata={
+            "generated_at": "2024-01-01T00:00:00Z",
+            "timeline": [
+                {
+                    "timestamp": "2024-01-01T00:00:01Z",
+                    "phase": "Detection <Phase>",
+                    "message": "Found payload with <>& chars",
+                }
+            ],
+        },
+    )
+
+    pdf_bytes = render_pdf(result)
+    assert isinstance(pdf_bytes, bytes)
+    assert len(pdf_bytes) > 0

@@ -52,10 +52,60 @@ class PolicyEnforcer:
             if not rule.enabled:
                 continue
 
+            if rule.type == PolicyRuleType.MAX_FINDINGS:
+                matching = (
+                    [f for f in findings if f.kind in rule.kinds]
+                    if rule.kinds
+                    else findings
+                )
+                if rule.max_count is not None and len(matching) > rule.max_count:
+                    violations.append(
+                        PolicyViolation(
+                            rule_name=rule.name,
+                            rule_type=rule.type,
+                            action=rule.action,
+                            message=f"Findings count ({len(matching)}) exceeds maximum allowed ({rule.max_count})",
+                            details={
+                                "count": len(matching),
+                                "max_count": rule.max_count,
+                                "kinds": list(rule.kinds),
+                            },
+                        )
+                    )
+                continue
+
             for finding in findings:
                 violation = self._check_rule(rule, finding)
                 if violation:
                     violations.append(violation)
+
+        if self.policy.compliance and self.policy.compliance.frameworks:
+            for framework in self.policy.compliance.frameworks:
+                for finding in findings:
+                    details = finding.details if isinstance(finding.details, dict) else {}
+                    compliance = details.get("compliance")
+                    framework_data = (
+                        compliance.get(framework) if isinstance(compliance, dict) else None
+                    )
+                    if not framework_data:
+                        action = (
+                            PolicyAction.FAIL_SCAN
+                            if self.policy.compliance.strict_mode
+                            else PolicyAction.WARN_ONLY
+                        )
+                        violations.append(
+                            PolicyViolation(
+                                rule_name=f"Compliance Gate: {framework}",
+                                rule_type=PolicyRuleType.COMPLIANCE_GATE,
+                                action=action,
+                                message=f"Finding '{finding.kind}' missing compliance mapping for required framework '{framework}'",
+                                finding=finding,
+                                details={
+                                    "framework": framework,
+                                    "strict_mode": self.policy.compliance.strict_mode,
+                                },
+                            )
+                        )
 
         logger.info(
             "policy_enforced",
@@ -278,12 +328,14 @@ class PolicyEnforcer:
         if not rule.techniques:
             return None
 
-        techniques = details.get("techniques", [])
-        if not isinstance(techniques, list):
-            techniques = []
+        raw_techniques = details.get("techniques", [])
+        if not isinstance(raw_techniques, list):
+            raw_techniques = [str(raw_techniques)] if raw_techniques else []
+        if single_tech := details.get("technique"):
+            raw_techniques.append(str(single_tech))
 
         required_lower = [t.lower() for t in rule.techniques]
-        techniques_lower = [t.lower() for t in techniques]
+        techniques_lower = [t.lower() for t in raw_techniques]
 
         missing = set(required_lower) - set(techniques_lower)
 
@@ -292,12 +344,12 @@ class PolicyEnforcer:
                 rule_name=rule.name,
                 rule_type=rule.type,
                 action=rule.action,
-                message=f"Missing required detection techniques: {', '.join(missing)}",
+                message=f"Missing required detection techniques: {', '.join(sorted(missing))}",
                 finding=finding,
                 details={
                     "required": rule.techniques,
-                    "present": techniques,
-                    "missing": list(missing),
+                    "present": raw_techniques,
+                    "missing": sorted(missing),
                 },
             )
 

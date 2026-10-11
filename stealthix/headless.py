@@ -35,6 +35,7 @@ from stealthix.impact import (
     plan_impact_operation,
 )
 from stealthix.plugins.runtime import apply_plugin
+from stealthix.policy import PolicyEnforcer, load_policy
 from stealthix.proxy import ProxyWorkspace, passive_injection_hints
 from stealthix.reporting import (
     render_csv,
@@ -693,10 +694,37 @@ def run_scan(args: Any, logger: Any, config_data: dict[str, Any]) -> HeadlessRes
         logger.exception("Scan failed: %s", exc)
         return HeadlessResult(exit_code=2, rendered="")
     logger.info("Findings: %s", len(result.findings))
+    policy_path = getattr(args, "policy", None) or config_data.get("policy")
+    policy_failed = False
+    if policy_path:
+        try:
+            policy = load_policy(policy_path)
+            enforcer = PolicyEnforcer(policy)
+            violations = enforcer.enforce(result.findings)
+            policy_failed = enforcer.should_fail_scan(violations)
+            result.metadata["policy_violations"] = [
+                {
+                    "rule_name": v.rule_name,
+                    "rule_type": v.rule_type.value if hasattr(v.rule_type, "value") else str(v.rule_type),
+                    "action": v.action.value if hasattr(v.action, "value") else str(v.action),
+                    "message": v.message,
+                    "details": v.details,
+                }
+                for v in violations
+            ]
+            if policy_failed:
+                logger.warning(
+                    "Scan policy violation triggered FAIL_SCAN: %d violations", len(violations)
+                )
+        except Exception as exc:
+            logger.error("Failed to load or enforce policy %s: %s", policy_path, exc)
+            return HeadlessResult(exit_code=2, rendered=f"Policy error: {exc}")
+
     result.metadata["generated_at"] = datetime.datetime.now(datetime.UTC).isoformat()
     result.metadata.setdefault("request_history", session.history.to_list())
     result.metadata.setdefault("scanned_targets", [result.target])
-    result.metadata["ci"] = _ci_metadata(1 if result.findings else 0)
+    scan_exit_code = 1 if (result.findings or policy_failed) else 0
+    result.metadata["ci"] = _ci_metadata(scan_exit_code)
     if checkpoint_manager is not None:
         result.metadata.setdefault("checkpoint", {}).update(
             {
@@ -711,10 +739,12 @@ def run_scan(args: Any, logger: Any, config_data: dict[str, Any]) -> HeadlessRes
     session.metadata.update(result.metadata)
     _save_session_if_requested(args, session)
     report = getattr(args, "report", "json")
-    return render_report(result, report)
+    return render_report(result, report, exit_code=scan_exit_code)
 
 
-def render_report(result: ScanResult, report: str) -> HeadlessResult:
+def render_report(
+    result: ScanResult, report: str, exit_code: int | None = None
+) -> HeadlessResult:
     if report == "html":
         rendered = render_html(result)
     elif report == "markdown":
@@ -729,8 +759,9 @@ def render_report(result: ScanResult, report: str) -> HeadlessResult:
         rendered = render_csv(result)
     else:
         rendered = render_json(result)
+    resolved_exit_code = (1 if result.findings else 0) if exit_code is None else exit_code
     return HeadlessResult(
-        exit_code=1 if result.findings else 0, rendered=rendered, is_binary=report == "pdf"
+        exit_code=resolved_exit_code, rendered=rendered, is_binary=report == "pdf"
     )
 
 

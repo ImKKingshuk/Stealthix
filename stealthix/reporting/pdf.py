@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 from io import BytesIO
 from typing import Any, cast
 
@@ -24,6 +25,11 @@ except ImportError:
 
 from stealthix.core.models import ScanResult
 from stealthix.reporting.presentation import build_report_context
+
+
+def _esc(value: Any) -> str:
+    """Escape text for safe inclusion in ReportLab Paragraph XML-like markup."""
+    return html.escape(str(value or ""), quote=True)
 
 
 def render_pdf(result: ScanResult) -> bytes:
@@ -75,10 +81,10 @@ def render_pdf(result: ScanResult) -> bytes:
     # Build story
     story: list[Any] = [
         Paragraph("Stealthix Enterprise Report", heading),
-        Paragraph(f"Target: {report['target']}", body),
-        Paragraph(f"Generated: {report.get('generated_at') or ''}", body),
+        Paragraph(f"Target: {_esc(report['target'])}", body),
+        Paragraph(f"Generated: {_esc(report.get('generated_at') or '')}", body),
         Paragraph(
-            f"Risk score: {report['executive_summary']['risk_score']} ({report['executive_summary']['risk_rating']}) | Highest CVSS: {report['scores']['highest']} | Average CVSS: {report['scores']['average']}",
+            f"Risk score: {report['executive_summary']['risk_score']} ({_esc(report['executive_summary']['risk_rating'])}) | Highest CVSS: {report['scores']['highest']} | Average CVSS: {report['scores']['average']}",
             body,
         ),
         Spacer(1, 12),
@@ -90,7 +96,7 @@ def render_pdf(result: ScanResult) -> bytes:
         [
             ["Metric", "Value"],
             ["Total findings", str(report["executive_summary"]["total_findings"])],
-            ["Highest severity", report["executive_summary"]["highest_severity"]],
+            ["Highest severity", str(report["executive_summary"]["highest_severity"])],
             ["Requests observed", str(report["attack_surface"]["request_count"])],
             ["Targets observed", str(report["attack_surface"]["target_count"])],
         ],
@@ -117,26 +123,28 @@ def render_pdf(result: ScanResult) -> bytes:
         for finding in report["findings"]:
             severity = finding.get("severity", "Info")
             severity_color = _get_severity_color(severity)
-            story.append(Paragraph(f"<b>{finding['kind']}</b> — {finding['summary']}", body))
-            story.append(Paragraph(f"Target: {finding['target']}", body))
             story.append(
-                Paragraph(f"<font color='{severity_color}'>Severity: {severity}</font>", body)
+                Paragraph(f"<b>{_esc(finding['kind'])}</b> — {_esc(finding['summary'])}", body)
+            )
+            story.append(Paragraph(f"Target: {_esc(finding['target'])}", body))
+            story.append(
+                Paragraph(f"<font color='{severity_color}'>Severity: {_esc(severity)}</font>", body)
             )
             story.append(
                 Paragraph(
-                    f"CVSS: {finding.get('cvss', 0):.1f} | Confidence: {finding.get('confidence', 'N/A')} ({finding.get('confidence_score', 0):.0%})",
+                    f"CVSS: {finding.get('cvss', 0):.1f} | Confidence: {_esc(finding.get('confidence', 'N/A'))} ({finding.get('confidence_score', 0):.0%})",
                     body,
                 )
             )
             story.append(
                 Paragraph(
-                    f"CWE: {finding['compliance']['cwe']['id']} | OWASP: {', '.join(item['id'] for item in finding['compliance']['owasp_top_10'])}",
+                    f"CWE: {_esc(finding['compliance']['cwe']['id'])} | OWASP: {_esc(', '.join(item['id'] for item in finding['compliance']['owasp_top_10']))}",
                     body,
                 )
             )
             story.append(
                 Paragraph(
-                    f"Remediation: {finding['remediation'][0] if finding['remediation'] else 'N/A'}",
+                    f"Remediation: {_esc(finding['remediation'][0] if finding['remediation'] else 'N/A')}",
                     body,
                 )
             )
@@ -144,14 +152,14 @@ def render_pdf(result: ScanResult) -> bytes:
                 pair = finding["evidence_pairs"][0]
                 story.append(
                     Paragraph(
-                        f"Request: {pair['request'].get('method')} {pair['request'].get('url')}",
+                        f"Request: {_esc(pair['request'].get('method'))} {_esc(pair['request'].get('url'))}",
                         mono,
                     )
                 )
-                response_line = f"Response: {pair['response'].get('status') or ''} {pair['response'].get('content_type') or ''}"
+                response_line = f"Response: {_esc(pair['response'].get('status') or '')} {_esc(pair['response'].get('content_type') or '')}"
                 story.append(Paragraph(response_line.strip(), mono))
                 if pair["response"].get("body"):
-                    story.append(Paragraph(pair["response"]["body"][:500], mono))
+                    story.append(Paragraph(_esc(pair["response"]["body"][:500]), mono))
             story.append(Spacer(1, 10))
 
     # Reconnaissance section
@@ -240,7 +248,7 @@ def render_pdf(result: ScanResult) -> bytes:
         for event in report["timeline"]:
             story.append(
                 Paragraph(
-                    f"{event.get('timestamp') or ''} — <b>{event['phase']}</b>: {event['message']}",
+                    f"{_esc(event.get('timestamp') or '')} — <b>{_esc(event['phase'])}</b>: {_esc(event['message'])}",
                     body,
                 )
             )

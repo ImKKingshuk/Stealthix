@@ -117,11 +117,36 @@ class _FormHTMLParser(HTMLParser):
         self._current: DiscoveredForm | None = None
         self._textarea: FormField | None = None
         self._select: FormField | None = None
-        self._option_value: str | None = None
+        self._in_option: bool = False
+        self._option_explicit_value: str | None = None
+        self._option_text_parts: list[str] = []
+        self._option_selected: bool = False
+
+    def _flush_option(self) -> None:
+        if not self._in_option or self._select is None:
+            return
+        text = "".join(self._option_text_parts).strip()
+        val = (
+            self._option_explicit_value
+            if self._option_explicit_value is not None
+            else text
+        )
+        if val is not None and val != "":
+            self._select.options.append(val)
+            if self._option_selected and not self._select.value:
+                self._select.value = val
+        elif text:
+            self._select.options.append(text)
+            if self._option_selected and not self._select.value:
+                self._select.value = text
+        self._in_option = False
+        self._option_explicit_value = None
+        self._option_text_parts = []
         self._option_selected = False
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attrs_map = {str(key).lower(): str(value or "") for key, value in attrs}
+        raw_attrs = {str(key).lower(): value for key, value in attrs}
         normalized = tag.lower()
         if normalized == "form":
             action = urljoin(self.page_url, attrs_map.get("action") or self.page_url)
@@ -167,6 +192,7 @@ class _FormHTMLParser(HTMLParser):
             self._current.fields.append(self._textarea)
             return
         if normalized == "select":
+            self._flush_option()
             name = attrs_map.get("name") or attrs_map.get("id")
             if not name:
                 return
@@ -179,18 +205,17 @@ class _FormHTMLParser(HTMLParser):
             self._current.fields.append(self._select)
             return
         if normalized == "option" and self._select is not None:
-            self._option_value = attrs_map.get("value", "")
+            self._flush_option()
+            self._in_option = True
+            self._option_explicit_value = raw_attrs.get("value")
             self._option_selected = "selected" in attrs_map
+            self._option_text_parts = []
 
     def handle_data(self, data: str) -> None:
         if self._textarea is not None:
             self._textarea.value += data
-        if self._select is not None and self._option_value is not None:
-            option = self._option_value or data.strip()
-            if option:
-                self._select.options.append(option)
-                if self._option_selected and not self._select.value:
-                    self._select.value = option
+        if self._select is not None and self._in_option:
+            self._option_text_parts.append(data)
 
     def handle_endtag(self, tag: str) -> None:
         normalized = tag.lower()
@@ -198,13 +223,14 @@ class _FormHTMLParser(HTMLParser):
             self._textarea = None
             return
         if normalized == "option":
-            self._option_value = None
-            self._option_selected = False
+            self._flush_option()
             return
         if normalized == "select":
+            self._flush_option()
             self._select = None
             return
         if normalized == "form" and self._current is not None:
+            self._flush_option()
             self.forms.append(self._current)
             self._current = None
 

@@ -810,7 +810,7 @@ class MongoDBDirectAdapter(DirectServiceAdapterBase):
         if operation in {"columns", "dump"}:
             collection = quote(_target_table(target, table), safe="")
             columns = list(kwargs.get("columns") or [])
-            projection = {col: 1 for col in columns} if columns else {}
+            projection = dict.fromkeys(columns, 1) if columns else {}
             body: dict[str, Any] = {"limit": limit}
             if projection:
                 body["projection"] = projection

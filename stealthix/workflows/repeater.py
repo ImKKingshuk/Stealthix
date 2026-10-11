@@ -31,14 +31,15 @@ def replay_request(
         session.config.headers = {**original_headers, **dict(spec.headers)}
         session.config.cookies = {**original_cookies, **dict(spec.cookies)}
         session.config.body_format = spec.body_format
-        session.config.data = _copy_data(spec.data)
+        payload_data = _copy_data(spec.data) if spec.data is not None else spec.raw_body
+        session.config.data = payload_data
         multipart_fields = spec.metadata.get("multipart_fields")
         if isinstance(multipart_fields, list):
             session.metadata["multipart_fields"] = list(multipart_fields)
         body, elapsed = make_request(
             session,
             spec.url,
-            data=_copy_data(spec.data),
+            data=payload_data,
             method=spec.method,
             use_cache=use_cache,
         )

@@ -3,8 +3,8 @@ from __future__ import annotations
 from unittest.mock import patch
 
 from stealthix.evasion.polymorphic import (
-    PolymorphicEncoder,
     _DEFAULT_ENCODING_OPERATIONS,
+    PolymorphicEncoder,
     _py_fallback_tamper,
 )
 
@@ -30,7 +30,7 @@ def test_py_fallback_tamper_operations() -> None:
     assert b64_enc == "YWRtaW4="
 
     html_enc = _py_fallback_tamper("html_encode", "<script>")
-    assert "&lt;script&gt;" == html_enc
+    assert html_enc == "&lt;script&gt;"
 
 
 def test_polymorphic_encoder_without_rust_core() -> None:

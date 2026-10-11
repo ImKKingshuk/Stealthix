@@ -8,18 +8,20 @@ from stealthix.policy.enforcer import PolicyEnforcer, PolicyViolation
 from stealthix.policy.loader import PolicyLoader, load_policy
 from stealthix.policy.models import (
     ComplianceGate,
+    PolicyAction,
     PolicyConfig,
     PolicyRule,
     PolicyRuleType,
 )
 
 __all__ = [
+    "ComplianceGate",
+    "PolicyAction",
     "PolicyConfig",
+    "PolicyEnforcer",
+    "PolicyLoader",
     "PolicyRule",
     "PolicyRuleType",
-    "ComplianceGate",
-    "PolicyLoader",
-    "load_policy",
-    "PolicyEnforcer",
     "PolicyViolation",
+    "load_policy",
 ]
