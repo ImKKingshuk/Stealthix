@@ -29,11 +29,11 @@ def load_config(path: str | Path) -> SessionConfigModel:
         raise FileNotFoundError(str(path))
 
     if path.suffix in {".yaml", ".yml"}:
-        data = yaml.safe_load(path.read_text()) or {}
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     elif path.suffix == ".toml":
-        data = tomli.loads(path.read_text())
+        data = tomli.loads(path.read_text(encoding="utf-8"))
     elif path.suffix == ".json":
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
     else:
         raise ValueError(f"Unsupported config format: {path.suffix}")
 

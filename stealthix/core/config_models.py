@@ -147,6 +147,18 @@ class SessionConfigModel(BaseModel):
     # Output
     output_dir: str | None = Field(default=None, description="Output directory")
 
+    @model_validator(mode="before")
+    @classmethod
+    def _remap_url_alias(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "url" in data and "base_url" not in data:
+                data["base_url"] = data.pop("url")
+        return data
+
+    @property
+    def url(self) -> str:
+        return self.base_url
+
     @field_validator("base_url")
     @classmethod
     def validate_base_url(cls, v: str) -> str:

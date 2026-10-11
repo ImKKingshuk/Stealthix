@@ -31,11 +31,13 @@ class _WebSocketClient:
         headers: dict[str, str] | None = None,
         subprotocols: list[str] | None = None,
         timeout: float = 10.0,
+        verify_tls: bool = True,
     ) -> None:
         self.url = url
         self.headers = dict(headers or {})
         self.subprotocols = list(subprotocols or [])
         self.timeout = float(timeout or 10.0)
+        self.verify_tls = bool(verify_tls)
         self.sock: socket.socket | ssl.SSLSocket | None = None
 
     def __enter__(self) -> _WebSocketClient:
@@ -56,6 +58,9 @@ class _WebSocketClient:
         raw_sock.settimeout(self.timeout)
         if parsed.scheme == "wss":
             context = ssl.create_default_context()
+            if not self.verify_tls:
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
             self.sock = context.wrap_socket(raw_sock, server_hostname=host)
         else:
             self.sock = raw_sock
@@ -314,6 +319,7 @@ def _exchange_message(session: ScanSession, url: str, message: str) -> tuple[str
         headers=session.config.ws_headers,
         subprotocols=session.config.ws_subprotocols,
         timeout=session.config.ws_timeout,
+        verify_tls=session.config.verify_tls,
     ) as client:
         client.send_text(message)
         response = client.read_message()

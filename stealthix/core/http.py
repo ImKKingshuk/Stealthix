@@ -404,6 +404,23 @@ def _attempt_adaptive_retry(
                 session, candidate, blocked=blocked, status_code=response.status_code
             )
             if not blocked:
+                session.history.add(
+                    candidate.url,
+                    request_method,
+                    str(response.status_code),
+                    elapsed,
+                    {
+                        "method": request_method,
+                        "headers": dict(response.headers),
+                        "content_type": response.headers.get("Content-Type", ""),
+                        "status_code": response.status_code,
+                        "request_headers": dict(candidate.headers),
+                        "request_body": _excerpt_payload(candidate.data),
+                        "response_excerpt": _excerpt_payload(text),
+                        "transport": candidate.transport,
+                        "adaptive_bypassed": True,
+                    },
+                )
                 if use_cache and cache_enabled() and is_cacheable(candidate.url, ""):
                     get_cache().set(
                         (

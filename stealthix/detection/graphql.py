@@ -47,7 +47,12 @@ def _post_json(session: ScanSession, url: str, payload: dict[str, Any]) -> tuple
         "POST",
         str(resp.status_code),
         elapsed,
-        {"method": "POST", "content_type": "application/json"},
+        {
+            "method": "POST",
+            "content_type": "application/json",
+            "status_code": resp.status_code,
+            "headers": dict(resp.headers),
+        },
     )
     return resp.text, elapsed
 
