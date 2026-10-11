@@ -4,6 +4,7 @@ import base64
 import json
 import logging
 import os
+import threading
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -30,19 +31,23 @@ _REDACTED = "***REDACTED***"
 @dataclass
 class CredentialStore:
     secrets: dict[str, str] = field(default_factory=dict)
+    _lock: threading.RLock = field(default_factory=threading.RLock, init=False, repr=False)
 
     def add(self, name: str, value: str) -> None:
-        self.secrets[name] = value
+        with self._lock:
+            self.secrets[name] = value
 
     def get(self, name: str) -> str | None:
-        return self.secrets.get(name)
+        with self._lock:
+            return self.secrets.get(name)
 
     def to_dict(self, *, include_secrets: bool = True, redacted: bool = False) -> dict[str, Any]:
-        if include_secrets:
-            return {"secrets": dict(self.secrets)}
-        if redacted:
-            return {"secrets": dict.fromkeys(self.secrets, _REDACTED)}
-        return {"secrets": {}}
+        with self._lock:
+            if include_secrets:
+                return {"secrets": dict(self.secrets)}
+            if redacted:
+                return {"secrets": dict.fromkeys(self.secrets, _REDACTED)}
+            return {"secrets": {}}
 
     @staticmethod
     def from_dict(payload: dict[str, Any]) -> CredentialStore:

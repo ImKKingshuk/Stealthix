@@ -166,7 +166,16 @@ class DistributedWorker:
         result = engine.detect()
 
         # Convert to TaskResult
-        findings_json = [vars(finding) for finding in result.findings]
+        def _serialize_finding(finding: Any) -> dict[str, Any]:
+            if hasattr(finding, "to_dict") and callable(finding.to_dict):
+                return finding.to_dict()
+            if hasattr(finding, "__dict__"):
+                return vars(finding)
+            if isinstance(finding, dict):
+                return finding
+            return {"kind": str(finding), "target": str(task.target), "details": {}}
+
+        findings_json = [_serialize_finding(finding) for finding in result.findings]
         task_result = TaskResult(
             task_id=task.task_id,
             findings=findings_json,

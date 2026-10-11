@@ -338,7 +338,12 @@ def _evaluate_matcher(matcher: TemplateMatcher, response: TemplateResponse) -> M
         matched = _combine(checks, matcher.condition)
     elif matcher.type == "regex":
         flags = re.IGNORECASE if matcher.case_insensitive else 0
-        checks = [bool(re.search(pattern, part, flags=flags)) for pattern in matcher.regex]
+        checks: list[bool] = []
+        for pattern in matcher.regex:
+            try:
+                checks.append(bool(re.search(pattern, part, flags=flags)))
+            except re.error:
+                checks.append(False)
         matched = _combine(checks, matcher.condition)
     else:
         matched = False
@@ -354,7 +359,11 @@ def _run_extractors(
             continue
         part = _response_part(response, extractor.part)
         for pattern in extractor.regex:
-            for match in re.finditer(pattern, part):
+            try:
+                iterator = list(re.finditer(pattern, part))
+            except re.error:
+                continue
+            for match in iterator:
                 group = extractor.group if extractor.group <= (match.lastindex or 0) else 0
                 name = extractor.name or f"{extractor.part}.regex"
                 values.append(

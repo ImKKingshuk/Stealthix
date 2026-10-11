@@ -30,9 +30,9 @@ class TokenBucket:
             rate: Tokens per second (refill rate)
             capacity: Maximum number of tokens (burst size)
         """
-        self.rate = rate
-        self.capacity = capacity
-        self.tokens = float(capacity)
+        self.rate = max(0.001, float(rate))
+        self.capacity = max(1, int(capacity))
+        self.tokens = float(self.capacity)
         self.last_refill = time.time()
         self.lock = threading.Lock()
 
@@ -98,8 +98,14 @@ class GlobalRateLimiter:
             default_rate: Default requests per second (from env or 10)
             default_burst: Default burst size (from env or 5)
         """
-        self.default_rate = default_rate or float(os.environ.get("STEALTHIX_RATE_LIMIT_RPS", "10"))
-        self.default_burst = default_burst or int(os.environ.get("STEALTHIX_RATE_LIMIT_BURST", "5"))
+        self.default_rate = max(
+            0.001,
+            float(default_rate or os.environ.get("STEALTHIX_RATE_LIMIT_RPS", "10")),
+        )
+        self.default_burst = max(
+            1,
+            int(default_burst or os.environ.get("STEALTHIX_RATE_LIMIT_BURST", "5")),
+        )
         self.buckets: dict[str, TokenBucket] = defaultdict(
             lambda: TokenBucket(self.default_rate, self.default_burst)
         )

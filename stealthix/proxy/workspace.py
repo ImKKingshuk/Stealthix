@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import threading
 import uuid
 from collections.abc import Iterable
 from dataclasses import dataclass, field, replace
@@ -329,33 +330,40 @@ class ProxyWorkspace:
         self.root = Path(root)
         self.history_path = self.root / "history.jsonl"
         self.root.mkdir(parents=True, exist_ok=True)
+        self._lock = threading.RLock()
         self._records: dict[str, CapturedExchange] = {}
         self._load()
 
     def _load(self) -> None:
-        if not self.history_path.exists():
-            return
-        for line in self.history_path.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
-                continue
-            record = CapturedExchange.from_dict(json.loads(line))
-            self._records[record.id] = record
+        with self._lock:
+            if not self.history_path.exists():
+                return
+            for line in self.history_path.read_text(encoding="utf-8").splitlines():
+                if not line.strip():
+                    continue
+                try:
+                    record = CapturedExchange.from_dict(json.loads(line))
+                    self._records[record.id] = record
+                except Exception:
+                    continue
 
     def _persist(self) -> None:
-        tmp = self.history_path.with_suffix(".jsonl.tmp")
-        tmp.write_text(
-            "".join(
-                json.dumps(record.to_dict(), sort_keys=True, ensure_ascii=False) + "\n"
-                for record in self._records.values()
-            ),
-            encoding="utf-8",
-        )
-        tmp.replace(self.history_path)
+        with self._lock:
+            tmp = self.history_path.with_suffix(".jsonl.tmp")
+            tmp.write_text(
+                "".join(
+                    json.dumps(record.to_dict(), sort_keys=True, ensure_ascii=False) + "\n"
+                    for record in self._records.values()
+                ),
+                encoding="utf-8",
+            )
+            tmp.replace(self.history_path)
 
     def upsert(self, record: CapturedExchange) -> CapturedExchange:
-        self._records[record.id] = record
-        self._persist()
-        return record
+        with self._lock:
+            self._records[record.id] = record
+            self._persist()
+            return record
 
     def capture_request(
         self,
@@ -427,10 +435,12 @@ class ProxyWorkspace:
         return self.upsert(self.get(record_id).with_updates(request=request))
 
     def get(self, record_id: str) -> CapturedExchange:
-        return self._records[record_id]
+        with self._lock:
+            return self._records[record_id]
 
     def records(self) -> list[CapturedExchange]:
-        return list(self._records.values())
+        with self._lock:
+            return list(self._records.values())
 
     def search(
         self,
@@ -449,8 +459,9 @@ class ProxyWorkspace:
                 query=query, method=method, status=status, tag=tag, host=host, limit=limit
             )
         )
-        results = [record for record in self._records.values() if _matches(record, criteria)]
-        return results[: criteria.limit] if criteria.limit is not None else results
+        with self._lock:
+            results = [record for record in self._records.values() if _matches(record, criteria)]
+            return results[: criteria.limit] if criteria.limit is not None else results
 
     def import_records(self, records: Iterable[CapturedExchange]) -> list[CapturedExchange]:
         imported = []

@@ -537,35 +537,38 @@ def make_request(
         client_cls = None
 
     if client_cls:
-        client = client_cls(
-            proxy=session.config.proxy,
-            timeout=session.config.timeout,
-            verify_tls=session.config.verify_tls,
-        )
-        payload = encoded if method_uses_body(request_method) else ""
-        response = client.request(
-            request_method, url, session.config.headers, session.config.cookies, payload
-        )
-        elapsed = time.perf_counter() - start
-        session.history.add(
-            url,
-            request_method,
-            None,
-            elapsed,
-            {
-                "method": request_method,
-                "transport": "rust",
-                "request_headers": dict(request_headers),
-                "request_body": _excerpt_payload(request_data),
-                "response_excerpt": _excerpt_payload(response),
-            },
-        )
-        if use_cache and cache_enabled() and is_cacheable(url, payload):
-            get_cache().set(cache_key, response)
-        # Track metrics
-        metrics = get_metrics()
-        metrics.increment_request(target=url, method=request_method, latency=elapsed)
-        return response, elapsed
+        try:
+            client = client_cls(
+                proxy=session.config.proxy,
+                timeout=session.config.timeout,
+                verify_tls=session.config.verify_tls,
+            )
+            payload = encoded if method_uses_body(request_method) else ""
+            response = client.request(
+                request_method, url, session.config.headers, session.config.cookies, payload
+            )
+            elapsed = time.perf_counter() - start
+            session.history.add(
+                url,
+                request_method,
+                None,
+                elapsed,
+                {
+                    "method": request_method,
+                    "transport": "rust",
+                    "request_headers": dict(request_headers),
+                    "request_body": _excerpt_payload(request_data),
+                    "response_excerpt": _excerpt_payload(response),
+                },
+            )
+            if use_cache and cache_enabled() and is_cacheable(url, payload):
+                get_cache().set(cache_key, response)
+            # Track metrics
+            metrics = get_metrics()
+            metrics.increment_request(target=url, method=request_method, latency=elapsed)
+            return response, elapsed
+        except Exception as exc:
+            logger.debug("rust_http_client_failed_fallback_to_python", url=url, error=str(exc))
 
     headers = dict(request_headers)
     proxies = (
@@ -604,7 +607,7 @@ def make_request(
             attempts.append({"attempt": attempt + 1, "elapsed": elapsed, "error": str(exc)})
             last_error = exc
             if retry_budget <= 0:
-                raise
+                raise NetworkError(f"HTTP request to {url} failed: {exc}") from exc
             retry_budget -= 1
             delay = base_backoff * (attempt + 1)
             _record_hostile_target(

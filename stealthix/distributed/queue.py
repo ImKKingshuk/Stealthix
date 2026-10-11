@@ -143,6 +143,12 @@ class RedisTaskQueue:
         """Ensure Redis connection is active."""
         if self._redis is None:
             self.connect()
+        else:
+            try:
+                self._redis.ping()
+            except (ConnectionError, TimeoutError):
+                logger.warning("Stale Redis connection detected, reconnecting...")
+                self.connect()
         return cast(Redis, self._redis)
 
     def enqueue_task(self, task: ScanTask) -> str:

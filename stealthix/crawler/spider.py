@@ -28,6 +28,7 @@ class SpiderOptions:
     parse_robots: bool = True
     parse_sitemap: bool = True
     fetch_scripts: bool = True
+    max_page_size: int = 2 * 1024 * 1024
 
 
 class _DocumentParser(HTMLParser):
@@ -239,8 +240,12 @@ class Spider:
                     }
                 )
                 continue
+            capped_body = body[: self.options.max_page_size] if len(body) > self.options.max_page_size else body
             doc_parser = _DocumentParser()
-            doc_parser.feed(body)
+            try:
+                doc_parser.feed(capped_body)
+            except Exception:
+                pass
             normalized_links = [
                 normalized
                 for raw in doc_parser.urls
@@ -253,7 +258,10 @@ class Spider:
                 for normalized in _extract_js_urls(current_url, script)
                 if _in_scope(normalized_start, normalized, self.options.scope)
             ]
-            form_objects = parse_forms(current_url, body)
+            try:
+                form_objects = parse_forms(current_url, capped_body)
+            except Exception:
+                form_objects = []
             form_dicts = [form.to_dict() for form in form_objects]
             forms.extend(form_dicts)
             targets.extend(item for item in build_form_targets(self.session, form_objects))

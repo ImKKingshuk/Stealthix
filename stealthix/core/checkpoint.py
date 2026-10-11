@@ -82,8 +82,12 @@ def restore_session(payload: dict[str, Any]) -> ScanSession:
 
 def load_checkpoint(path: str | Path) -> dict[str, Any]:
     checkpoint_path = Path(path)
+    if not checkpoint_path.is_file():
+        raise FileNotFoundError(f"Checkpoint file not found: {checkpoint_path}")
     with checkpoint_path.open("r", encoding="utf-8") as handle:
         payload = json.load(handle)
+    if not isinstance(payload, dict):
+        raise ValueError(f"Malformed checkpoint file (not a JSON object): {checkpoint_path}")
     if payload.get("kind") != CHECKPOINT_KIND:
         raise ValueError(f"Unsupported checkpoint file: {checkpoint_path}")
     if int(payload.get("version", 0)) != CHECKPOINT_VERSION:

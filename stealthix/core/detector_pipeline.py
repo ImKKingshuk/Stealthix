@@ -423,8 +423,26 @@ class DetectorPipelineExecutor:
 
         if workers <= 1:
             for task in stage.tasks:
-                order, task_findings, worker_session = self.execute_task(task)
-                self.session.merge_worker_state(worker_session)
+                try:
+                    order, task_findings, worker_session = self.execute_task(task)
+                    self.session.merge_worker_state(worker_session)
+                except Exception as e:
+                    self.logger.error(
+                        "task_execution_error",
+                        stage=stage.phase,
+                        detector=task.detector,
+                        error=str(e),
+                        exc_info=True,
+                    )
+                    self.session.metadata.setdefault("task_errors", []).append(
+                        {
+                            "stage": stage.phase,
+                            "detector": task.detector,
+                            "task_id": task_key(stage, task),
+                            "error": str(e),
+                        }
+                    )
+                    order, task_findings = task.order, []
                 completed_tasks = self._record_task_completion(
                     stage=stage,
                     task=task,
@@ -448,8 +466,26 @@ class DetectorPipelineExecutor:
             try:
                 for future in as_completed(futures):
                     task = futures[future]
-                    order, task_findings, worker_session = future.result()
-                    self.session.merge_worker_state(worker_session)
+                    try:
+                        order, task_findings, worker_session = future.result()
+                        self.session.merge_worker_state(worker_session)
+                    except Exception as e:
+                        self.logger.error(
+                            "task_execution_error",
+                            stage=stage.phase,
+                            detector=task.detector,
+                            error=str(e),
+                            exc_info=True,
+                        )
+                        self.session.metadata.setdefault("task_errors", []).append(
+                            {
+                                "stage": stage.phase,
+                                "detector": task.detector,
+                                "task_id": task_key(stage, task),
+                                "error": str(e),
+                            }
+                        )
+                        order, task_findings = task.order, []
                     completed_tasks = self._record_task_completion(
                         stage=stage,
                         task=task,
@@ -466,16 +502,6 @@ class DetectorPipelineExecutor:
                 for future in futures:
                     future.cancel()
                 raise
-            except DetectionError as e:
-                self.logger.error(
-                    "stage_execution_error",
-                    stage=stage.phase,
-                    error=str(e),
-                    exc_info=True,
-                )
-                for future in futures:
-                    future.cancel()
-                raise DetectionError(f"Stage execution failed: {e}") from e
 
         return flatten_stage_results(stage_results), completed_tasks, completed_task_ids
 
