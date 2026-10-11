@@ -62,27 +62,45 @@ class TechDetector:
             if not response:
                 return matches
 
-            # make_request returns (text, elapsed), not a response object
-            # Use requests directly to get proper response object with headers, cookies
-            try:
-                import requests as requests_lib
+            body = response[0] if isinstance(response, tuple) else str(response)
 
-                proxy = self.session.config.proxy
-                proxies = {"http": proxy, "https": proxy} if proxy else None
-                full_response = requests_lib.get(
-                    self.session.config.base_url,
-                    timeout=self.session.config.timeout,
-                    proxies=proxies,
-                    verify=self.session.config.verify_tls,
-                )
-                headers = dict(full_response.headers)
-                body = full_response.text
-                cookies = dict(full_response.cookies)
-            except Exception:
-                # Fallback to the tuple response
-                body = response[0] if isinstance(response, tuple) else str(response)
-                headers = {}
-                cookies = {}
+            # Retrieve headers and metadata from session history if available
+            history_entry = next(
+                (
+                    entry
+                    for entry in reversed(self.session.history.to_list())
+                    if entry.get("url") == self.session.config.base_url
+                ),
+                {},
+            )
+            metadata = (
+                history_entry.get("metadata")
+                if isinstance(history_entry.get("metadata"), dict)
+                else {}
+            )
+            headers = dict(metadata.get("headers") or {}) if isinstance(metadata, dict) else {}
+            cookies = dict(self.session.config.cookies or {})
+
+            # If headers were not captured in metadata (e.g. transport omission), attempt direct inspection
+            if not headers:
+                try:
+                    import requests as requests_lib
+
+                    proxy = self.session.config.proxy
+                    proxies = {"http": proxy, "https": proxy} if proxy else None
+                    full_response = requests_lib.get(
+                        self.session.config.base_url,
+                        headers=dict(self.session.config.headers or {}),
+                        cookies=dict(self.session.config.cookies or {}),
+                        timeout=self.session.config.timeout,
+                        proxies=proxies,
+                        verify=self.session.config.verify_tls,
+                    )
+                    headers = dict(full_response.headers)
+                    body = full_response.text
+                    cookies.update(dict(full_response.cookies))
+                except Exception:
+                    pass
 
             # Match each fingerprint
             for fingerprint in self.fingerprints:

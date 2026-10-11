@@ -179,15 +179,39 @@ class EndpointDiscovery:
                 data=None,
             )
 
-            # If HEAD not supported, retry with GET
-            if use_head and response and len(response) == 2 and method == "HEAD":
-                response = make_request(
-                    self.session,
-                    method="GET",
-                    url=url,
-                    data=None,
+            # If HEAD was rejected (e.g. 405 Method Not Allowed or 501 Not Implemented), retry with GET
+            if use_head and response and method == "HEAD":
+                head_entry = next(
+                    (
+                        entry
+                        for entry in reversed(self.session.history.to_list())
+                        if entry.get("url") == url and entry.get("method") == "HEAD"
+                    ),
+                    {},
                 )
-                method = "GET"
+                head_meta = (
+                    head_entry.get("metadata")
+                    if isinstance(head_entry.get("metadata"), dict)
+                    else {}
+                )
+                head_status = (
+                    head_meta.get("status_code")
+                    if isinstance(head_meta, dict)
+                    else head_entry.get("status")
+                )
+                try:
+                    head_code = int(head_status) if head_status is not None else 200
+                except (TypeError, ValueError):
+                    head_code = 200
+
+                if head_code in {405, 501}:
+                    response = make_request(
+                        self.session,
+                        method="GET",
+                        url=url,
+                        data=None,
+                    )
+                    method = "GET"
 
             elapsed = time.time() - start_time
 

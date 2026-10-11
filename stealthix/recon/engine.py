@@ -69,7 +69,10 @@ class ReconEngine:
             results["errors"].append(f"Reconnaissance failed: {exc}")
 
         results["elapsed"] = time.time() - start_time
-        results["errors"] = self.session.metadata.get("recon_errors", [])
+        session_errors = self.session.metadata.get("recon_errors", [])
+        for err in session_errors:
+            if err not in results["errors"]:
+                results["errors"].append(err)
 
         return results
 

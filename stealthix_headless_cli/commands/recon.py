@@ -35,11 +35,15 @@ def recon_tech(args: Any) -> dict[str, Any]:
         "target": args.url,
         "technologies": [
             {
-                "category": tech.category,
-                "name": tech.name,
-                "version": tech.version,
-                "confidence": tech.confidence,
-                "evidence_count": len(tech.evidence),
+                "category": tech["category"] if isinstance(tech, dict) else tech.category,
+                "name": tech["name"] if isinstance(tech, dict) else tech.name,
+                "version": tech.get("version") if isinstance(tech, dict) else tech.version,
+                "confidence": tech["confidence"] if isinstance(tech, dict) else tech.confidence,
+                "evidence_count": (
+                    len(tech.get("evidence", []))
+                    if isinstance(tech, dict)
+                    else len(getattr(tech, "evidence", []))
+                ),
             }
             for tech in results.get("technologies", [])
         ],
@@ -77,12 +81,32 @@ def recon_endpoints(args: Any) -> dict[str, Any]:
         "target": args.url,
         "endpoints": [
             {
-                "url": endpoint.url,
-                "status_code": endpoint.status_code,
-                "response_size": endpoint.response_size,
-                "response_time": endpoint.response_time,
-                "category": endpoint.category,
-                "confidence": endpoint.confidence,
+                "url": endpoint["url"] if isinstance(endpoint, dict) else endpoint.url,
+                "status_code": (
+                    endpoint["status_code"]
+                    if isinstance(endpoint, dict)
+                    else endpoint.status_code
+                ),
+                "response_size": (
+                    endpoint.get("response_size", 0)
+                    if isinstance(endpoint, dict)
+                    else getattr(endpoint, "response_size", 0)
+                ),
+                "response_time": (
+                    endpoint.get("response_time", 0.0)
+                    if isinstance(endpoint, dict)
+                    else getattr(endpoint, "response_time", 0.0)
+                ),
+                "category": (
+                    endpoint.get("category", "")
+                    if isinstance(endpoint, dict)
+                    else getattr(endpoint, "category", "")
+                ),
+                "confidence": (
+                    endpoint.get("confidence", 0.0)
+                    if isinstance(endpoint, dict)
+                    else getattr(endpoint, "confidence", 0.0)
+                ),
             }
             for endpoint in results.get("endpoints", [])
         ],
