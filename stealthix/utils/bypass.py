@@ -6,7 +6,7 @@ from typing import Any, cast
 
 from stealthix.core.session import ScanSession
 from stealthix.evasion.adaptive import infer_waf_vendor, resolve_tamper_pipeline, tamper_payload
-from stealthix.utils import load_rust_core
+from stealthix.utils.rust import load_rust_core
 
 _SPECIFIC_BYPASS_CLASSES = {
     "cloudflare": "CloudflareBypass",

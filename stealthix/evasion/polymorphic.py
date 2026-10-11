@@ -12,7 +12,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 
-from stealthix.utils import load_rust_core
+from stealthix.utils.rust import load_rust_core
 
 _DEFAULT_ENCODING_OPERATIONS: tuple[str, ...] = (
     "url_encode",

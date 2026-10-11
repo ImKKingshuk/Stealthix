@@ -12,7 +12,7 @@ from stealthix.core.session import ScanSession
 
 # Import new evasion modules
 from stealthix.evasion import behavioral, ml_bypass, polymorphic, protocol
-from stealthix.utils import load_rust_core
+from stealthix.utils.rust import load_rust_core
 
 _SQL_KEYWORDS = {
     "ALL",
