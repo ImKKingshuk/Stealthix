@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from stealthix.oob.dns_listener import DnsCallbackListener, get_global_listener
 from stealthix.oob.providers import (
+    HttpOASTProvider,
     LocalDnsOASTProvider,
     OASTConfirmation,
     OASTInteraction,
@@ -12,6 +13,7 @@ from stealthix.oob.providers import (
 
 __all__ = [
     "DnsCallbackListener",
+    "HttpOASTProvider",
     "LocalDnsOASTProvider",
     "OASTConfirmation",
     "OASTInteraction",

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from stealthix.core.http import make_request
@@ -13,6 +13,8 @@ class ReplayResult:
     spec: RequestSpec
     body: str
     elapsed: float
+    status_code: int | None = None
+    headers: dict[str, str] = field(default_factory=dict)
 
 
 def replay_request(
@@ -43,7 +45,25 @@ def replay_request(
             method=spec.method,
             use_cache=use_cache,
         )
-        return ReplayResult(spec=spec, body=body, elapsed=elapsed)
+        status_code = None
+        resp_headers: dict[str, str] = {}
+        latest_entry = session.history.latest()
+        if latest_entry:
+            try:
+                status_val = latest_entry.get("status")
+                if status_val is not None:
+                    status_code = int(status_val)
+            except (ValueError, TypeError):
+                status_code = None
+            meta = latest_entry.get("metadata") or {}
+            resp_headers = dict(meta.get("headers") or {})
+        return ReplayResult(
+            spec=spec,
+            body=body,
+            elapsed=elapsed,
+            status_code=status_code,
+            headers=resp_headers,
+        )
     finally:
         session.config.headers = original_headers
         session.config.cookies = original_cookies

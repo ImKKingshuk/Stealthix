@@ -44,8 +44,29 @@ def _hints_for_spec(spec: RequestSpec) -> list[InjectionHint]:
         return hints
     for name, values in parse_qs(parsed.query, keep_blank_values=True).items():
         hints.append(_score_value(str(name), values[0] if values else "", "query"))
-    for name, value in _body_fields(spec.data):
+    body_data = spec.data
+    if body_data is None and spec.raw_body:
+        raw_text = spec.raw_body.strip()
+        if raw_text:
+            if (raw_text.startswith("{") and raw_text.endswith("}")) or (
+                raw_text.startswith("[") and raw_text.endswith("]")
+            ):
+                import json
+
+                try:
+                    body_data = json.loads(raw_text)
+                except Exception:
+                    body_data = None
+            elif "=" in raw_text:
+                body_data = {
+                    k: v[0] if v else ""
+                    for k, v in parse_qs(raw_text, keep_blank_values=True).items()
+                }
+
+    for name, value in _body_fields(body_data):
         hints.append(_score_value(name, value, "body"))
+    for name, value in spec.cookies.items():
+        hints.append(_score_value(str(name), str(value), "cookie"))
     for name, value in spec.headers.items():
         lowered = str(name).lower()
         if lowered in _SENSITIVE_HEADERS:
@@ -85,7 +106,7 @@ def _score_value(name: str, value: Any, location: str) -> InjectionHint:
     if _NOSQLISH_VALUE_RE.search(text):
         reasons.append("NoSQL operator-like syntax already present")
         score += 0.35
-    if location == "header":
+    if location in {"header", "cookie"}:
         score -= 0.05
     return InjectionHint(
         name=name,

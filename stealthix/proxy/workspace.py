@@ -652,7 +652,7 @@ def _har_export(records: list[CapturedExchange]) -> dict[str, Any]:
                     "headers": request_headers,
                     "queryString": [
                         {"name": key, "value": value}
-                        for key, value in _query_pairs(parsed.query).items()
+                        for key, value in _query_pairs(parsed.query)
                     ],
                     "cookies": [
                         {"name": key, "value": value}
@@ -694,10 +694,10 @@ def _har_export(records: list[CapturedExchange]) -> dict[str, Any]:
     }
 
 
-def _query_pairs(query: str) -> dict[str, str]:
+def _query_pairs(query: str) -> list[tuple[str, str]]:
     from urllib.parse import parse_qsl
 
-    return dict(parse_qsl(query, keep_blank_values=True))
+    return [(str(k), str(v)) for k, v in parse_qsl(query, keep_blank_values=True)]
 
 
 __all__ = [

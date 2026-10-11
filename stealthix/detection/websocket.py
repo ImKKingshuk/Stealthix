@@ -17,6 +17,16 @@ from stealthix.core.models import Finding
 from stealthix.core.session import ScanSession
 
 
+def _is_ip(host: str) -> bool:
+    import ipaddress
+
+    try:
+        ipaddress.ip_address(host)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
 @dataclass
 class _Frame:
     opcode: int
@@ -61,7 +71,8 @@ class _WebSocketClient:
             if not self.verify_tls:
                 context.check_hostname = False
                 context.verify_mode = ssl.CERT_NONE
-            self.sock = context.wrap_socket(raw_sock, server_hostname=host)
+            sni_hostname = None if (host and _is_ip(host)) else host
+            self.sock = context.wrap_socket(raw_sock, server_hostname=sni_hostname)
         else:
             self.sock = raw_sock
         key = base64.b64encode(os.urandom(16)).decode("ascii")
@@ -140,8 +151,12 @@ class _WebSocketClient:
             if frame.opcode == 0x9:
                 self._send_pong(frame.payload)
                 continue
+            if frame.opcode == 0xA:
+                continue
             if frame.opcode in {0x1, 0x2}:
                 return frame.payload.decode("utf-8", errors="replace")
+            if frame.opcode not in {0x0, 0x1, 0x2, 0x8, 0x9, 0xA}:
+                return ""
 
     def _send_pong(self, payload: bytes) -> None:
         assert self.sock is not None

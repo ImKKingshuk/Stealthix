@@ -23,6 +23,8 @@ def find_payload_markers(spec: RequestSpec) -> list[PayloadMarker]:
     _collect_string_markers(spec.url, markers, location="url", path="url")
     for key, value in spec.headers.items():
         _collect_string_markers(str(value), markers, location="header", path=str(key))
+    for key, value in spec.cookies.items():
+        _collect_string_markers(str(value), markers, location="cookie", path=str(key))
     _collect_data_markers(spec.data, markers, location="body", path="data")
     if spec.raw_body:
         _collect_string_markers(spec.raw_body, markers, location="raw_body", path="raw_body")
@@ -122,6 +124,7 @@ def _replace_spec_markers(spec: RequestSpec, values: dict[str, str]) -> RequestS
     return spec.with_updates(
         url=_replace_markers(spec.url, values),
         headers={key: _replace_markers(value, values) for key, value in spec.headers.items()},
+        cookies={key: _replace_markers(value, values) for key, value in spec.cookies.items()},
         data=_replace_data(spec.data, values),
         raw_body=_replace_markers(spec.raw_body, values) if spec.raw_body is not None else None,
         metadata={**spec.metadata, "intruder_payloads": dict(values)},

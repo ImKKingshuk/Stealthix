@@ -39,6 +39,10 @@ class RequestHistory:
         with self._lock:
             return len(self.entries)
 
+    def latest(self) -> dict[str, Any] | None:
+        with self._lock:
+            return dict(self.entries[-1]) if self.entries else None
+
     @staticmethod
     def from_list(items: list[dict[str, Any]]) -> RequestHistory:
         history = RequestHistory()

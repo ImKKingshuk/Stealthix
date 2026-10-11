@@ -232,15 +232,21 @@ _RUNTIME_CAPABILITIES = {
     "oob": [
         {
             "name": "dns_callbacks",
-            "status": "partial",
+            "status": "implemented",
             "activation": "env-gated",
-            "notes": "SQLi OOB helper now supports plugin-aware DNS callback templates and can optionally confirm tokens through the local DNS listener.",
+            "notes": "SQLi OOB helper supports plugin-aware DNS callback templates, passive domains, and confirmed tokens through the local DNS listener.",
+        },
+        {
+            "name": "http_callbacks",
+            "status": "implemented",
+            "activation": "env-gated",
+            "notes": "HTTP/HTTPS OAST provider supports external webhook/Interactsh services with token polling and interaction logging.",
         },
         {
             "name": "listener_query_log",
             "status": "implemented",
             "activation": "env-gated",
-            "notes": "The local DNS listener now exposes observed query logs and multi-token confirmation for richer OOB evidence capture.",
+            "notes": "The local DNS listener exposes observed query logs and multi-token confirmation for richer OOB evidence capture.",
         },
     ],
     "waf": [
